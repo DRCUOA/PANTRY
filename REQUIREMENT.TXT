@@ -1,0 +1,706 @@
+This is a unified product definition for a single-user pantry web app focused on:
+
+- one person / one household
+- minimum effort to maintain
+- fast recording and updating
+- simple meal planning
+- low cognitive load
+- no-frills UI
+
+I’ll bring together:
+1. product concept
+2. requirements
+3. simple UX/UI direction
+4. example SQL schema
+
+---
+
+# 1. Product Concept
+
+This app is a quiet, practical kitchen tool for one household.
+
+Its purpose is to help a user:
+- know what food they have
+- add and update items quickly
+- use barcode scanning to reduce manual entry
+- see what needs using soon
+- plan meals from what is already on hand
+- stay roughly aligned with their own nutrition goals
+- reduce waste and repeated mental effort
+
+This is not a complex inventory system.
+It is not a social app.
+It is not a detailed nutrition tracker.
+
+It is a low-friction household assistant designed to reduce small daily decisions and admin work.
+
+## Core product promise
+“Capture groceries quickly, see what you have, and decide what to cook with less effort.”
+
+---
+
+# 2. Product Principles
+
+The product should follow these principles:
+
+## 2.1 Labor saving first
+Every feature must reduce user effort.
+If a feature adds work without clear benefit, it should be removed.
+
+## 2.2 Single-user simplicity
+No household roles, no sharing permissions, no multi-user workflows.
+
+## 2.3 Record once, reuse often
+Data entered during scanning or planning should support multiple future uses:
+- stock awareness
+- expiry reminders
+- meal suggestions
+- shopping prompts
+
+## 2.4 Low cognitive load
+The user should not need to interpret dense dashboards, too many choices, or complex status systems.
+
+## 2.5 Default to helpful
+Use:
+- smart defaults
+- recent values
+- autofill
+- simple suggestions
+- lightweight reminders
+
+## 2.6 Minimal UI
+The interface should be calm, obvious, and quick to use.
+
+---
+
+# 3. Simplified Core Features
+
+## 3.1 Pantry recording
+The user can:
+- add an item by barcode scan
+- add an item manually
+- edit quantity
+- mark an item used up
+- delete an item
+- set or confirm expiry date
+
+Each pantry item only needs:
+- name
+- quantity
+- unit
+- category
+- location
+- barcode optional
+- expiry date optional
+- nutrition reference optional
+
+Keep this simple.
+Avoid too many fields at first.
+
+## 3.2 Barcode-supported entry
+The app should make adding groceries fast:
+- scan barcode
+- product details fill automatically if known
+- user confirms quantity and expiry
+- save
+
+If barcode lookup fails:
+- let the user type a name quickly
+- remember it for next time
+
+## 3.3 Pantry overview
+The user can quickly see:
+- what’s in stock
+- what is low
+- what expires soon
+- what is already finished or should be removed
+
+The pantry list should be easy to scan visually and easy to search.
+
+## 3.4 Meal planning
+The app should suggest simple meal ideas based on:
+- what is already in the pantry
+- what expires soon
+- user meal preferences
+- nutrition preferences
+
+The user can:
+- save simple recipes
+- plan meals for the week
+- see which ingredients are missing
+- add missing ingredients to a shopping list
+
+## 3.5 Nutrition guidance
+Keep this light.
+The user can define:
+- calorie target
+- protein target
+- optional preferences like low sodium, vegetarian, high fiber
+
+The app should use these as guidance, not strict enforcement.
+
+## 3.6 Meal completion updates pantry
+When the user marks a planned meal as made:
+- ingredient quantities are reduced from pantry stock
+- user can adjust quantities before saving
+
+This is an important labor-saving loop.
+Planning should help maintain inventory automatically.
+
+## 3.7 Shopping support
+The app should create a basic shopping list from:
+- ingredients missing from planned meals
+- low-stock items manually added by the user
+
+No advanced grocery commerce features needed.
+
+---
+
+# 4. Simplified User Journey Design
+
+The app should revolve around just four main screens:
+
+- Home
+- Pantry
+- Scan / Add
+- Plan
+
+Optional fifth screen:
+- Settings
+
+That’s it.
+
+---
+
+# 5. Core UX Vision
+
+The app should feel:
+- calm
+- uncluttered
+- fast
+- quietly helpful
+
+It should feel more like a checklist and kitchen assistant than a management system.
+
+The design should support short sessions:
+- scan groceries in under a minute
+- check what to cook in seconds
+- update pantry with one tap after cooking
+
+The user should never feel like they are “doing data entry.”
+
+---
+
+# 6. Screen-by-Screen UX
+
+## 6.1 Home screen
+This is the user’s daily glance screen.
+
+It should answer only the most useful questions:
+- what should I use soon?
+- what is low?
+- what can I cook?
+- what’s planned next?
+
+### Home layout
+Top:
+- simple greeting or date
+- one primary action button: Scan Item
+
+Main content:
+- Expiring Soon
+- Low Stock
+- Cook With What You Have
+- Next Planned Meal
+
+Optional bottom section:
+- small nutrition progress summary
+
+### UX behavior
+Every section should be small and actionable.
+No large charts.
+No dense analytics.
+No unnecessary decoration.
+
+---
+
+## 6.2 Pantry screen
+This is the working inventory view.
+
+### Purpose
+Let the user:
+- search items
+- update quantities quickly
+- filter by simple categories
+- spot items that need attention
+
+### Layout
+Top:
+- search bar
+- simple filter chips:
+  - All
+  - Expiring
+  - Low
+  - Fridge
+  - Freezer
+  - Pantry
+
+Main:
+- straightforward list of items
+
+Each row shows:
+- item name
+- quantity
+- unit
+- expiry warning if relevant
+- location
+
+Tap row:
+- quick edit sheet opens
+
+### Quick edit sheet
+Only show:
+- name
+- quantity
+- expiry
+- location
+- mark used up
+- delete
+
+This should be extremely lightweight.
+
+---
+
+## 6.3 Scan / Add screen
+This is the highest-value labor-saving screen.
+
+### Experience
+Open camera immediately.
+Display:
+- barcode frame
+- short instruction
+- manual add fallback
+
+After successful scan:
+- show compact confirmation form:
+  - item name
+  - quantity
+  - expiry
+  - location
+- save
+- optionally continue scanning
+
+### Batch flow
+After save:
+- show “Saved”
+- button for “Scan next”
+
+This supports groceries being added quickly.
+
+---
+
+## 6.4 Plan screen
+This is the simple weekly planning area.
+
+### Purpose
+Help the user decide meals using what already exists.
+
+### Layout
+- weekly list or day-by-day cards
+- each day has meal slots:
+  - breakfast
+  - lunch
+  - dinner
+
+When user adds a meal:
+- show suggested recipes
+- rank by pantry match and expiry use
+- show missing ingredients simply
+
+Each planned meal should show:
+- meal name
+- pantry match
+- missing ingredients count
+- simple nutrition summary
+
+### Important
+Do not make this a complex calendar tool.
+Keep it lightweight and practical.
+
+---
+
+## 6.5 Settings / Goals
+A very small settings space.
+
+Include:
+- calorie target optional
+- protein target optional
+- dietary preferences
+- default locations
+- barcode / data preferences if needed
+
+This should be basic, not a large profile system.
+
+---
+
+# 7. Simplified Information Architecture
+
+## Top-level app structure
+- Home
+- Pantry
+- Scan
+- Plan
+- Settings
+
+## Primary actions
+- Add item
+- Edit quantity
+- Mark meal planned
+- Mark meal cooked
+- Add missing items to shopping list
+
+Everything else is secondary.
+
+---
+
+# 8. Simplified Design Direction for Low Cognitive Load
+
+## Visual principles
+- plain backgrounds
+- strong spacing
+- clear typography
+- very few colors
+- one accent color
+- soft warning colors for expiry or low stock
+- simple icons only where useful
+
+## Interaction principles
+- one main action per screen
+- no nested complexity
+- avoid modal overload
+- use bottom sheets or simple forms
+- use familiar patterns
+
+## Content principles
+- short labels
+- plain language
+- no jargon
+- avoid too many metrics
+- show only the next useful decision
+
+## Tone
+Quiet and practical.
+Never busy.
+Never gamified.
+Never preachy.
+
+---
+
+# 9. Simplified Functional Requirements
+
+## Must have
+- add pantry item manually
+- add pantry item via barcode
+- edit pantry item
+- search pantry
+- see low stock
+- see expiring soon
+- store simple recipes
+- suggest recipes from pantry contents
+- weekly meal planning
+- mark meal cooked
+- deduct ingredients from pantry
+- basic nutrition targets
+- shopping list from missing items
+
+## Should have
+- remember previous item entries
+- prefill categories and locations
+- support repeated scanning
+- simple notifications for expiry/low stock
+
+## Not needed in first version
+- multi-user households
+- role permissions
+- advanced analytics
+- social features
+- complex recipe authoring
+- grocery delivery integration
+- micronutrient tracking
+- rich charts and dashboards
+
+---
+
+# 10. Simplified Data Model
+
+For a single-user app, we can drastically reduce complexity.
+
+We do not need:
+- households
+- members
+- permissions
+- multiple pantries tied to multiple people
+
+We only need:
+- user
+- pantry items
+- products
+- recipes
+- recipe ingredients
+- meal plan entries
+- nutrition settings
+- shopping list items
+
+We can also avoid stock-lot complexity in v1 if we want maximum simplicity.
+
+Instead, use one pantry row per item with:
+- quantity
+- unit
+- expiry date
+- location
+
+This is less precise than multiple lots, but much simpler for the user and system.
+
+---
+
+# 11. Simple SQL Schema
+
+Below is a much simpler PostgreSQL schema for the single-user version.
+
+```sql
+-- =========================
+-- USER
+-- =========================
+
+CREATE TABLE users (
+  id                BIGSERIAL PRIMARY KEY,
+  email             VARCHAR(255) NOT NULL UNIQUE,
+  password_hash     TEXT NOT NULL,
+  name              VARCHAR(255),
+  created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- =========================
+-- USER SETTINGS / GOALS
+-- =========================
+
+CREATE TABLE user_settings (
+  user_id            BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  daily_calories     INTEGER,
+  daily_protein_g    INTEGER,
+  dietary_preferences TEXT,
+  default_location   VARCHAR(100),
+  created_at         TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- =========================
+-- PRODUCT LOOKUP
+-- =========================
+
+CREATE TABLE products (
+  id                BIGSERIAL PRIMARY KEY,
+  barcode           VARCHAR(64) UNIQUE,
+  name              VARCHAR(255) NOT NULL,
+  brand             VARCHAR(255),
+  category          VARCHAR(100),
+  default_unit      VARCHAR(50),
+  calories_per_100g NUMERIC(10,2),
+  protein_g_per_100g NUMERIC(10,2),
+  carbs_g_per_100g  NUMERIC(10,2),
+  fat_g_per_100g    NUMERIC(10,2),
+  fiber_g_per_100g  NUMERIC(10,2),
+  sodium_mg_per_100g NUMERIC(10,2),
+  created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- =========================
+-- PANTRY ITEMS
+-- =========================
+
+CREATE TABLE pantry_items (
+  id                BIGSERIAL PRIMARY KEY,
+  user_id            BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id         BIGINT REFERENCES products(id) ON DELETE SET NULL,
+  name               VARCHAR(255) NOT NULL,
+  category           VARCHAR(100),
+  quantity           NUMERIC(10,2) NOT NULL DEFAULT 0,
+  unit               VARCHAR(50) NOT NULL,
+  location           VARCHAR(100),
+  barcode            VARCHAR(64),
+  expiration_date    DATE,
+  low_stock_threshold NUMERIC(10,2),
+  notes              TEXT,
+  created_at         TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_pantry_items_user ON pantry_items(user_id);
+CREATE INDEX idx_pantry_items_name ON pantry_items(name);
+CREATE INDEX idx_pantry_items_expiration ON pantry_items(expiration_date);
+
+-- =========================
+-- SIMPLE INVENTORY HISTORY
+-- =========================
+
+CREATE TABLE inventory_log (
+  id                BIGSERIAL PRIMARY KEY,
+  pantry_item_id     BIGINT NOT NULL REFERENCES pantry_items(id) ON DELETE CASCADE,
+  action             VARCHAR(50) NOT NULL, -- add, edit, consume, delete, meal_deduction
+  quantity_change    NUMERIC(10,2),
+  note               TEXT,
+  created_at         TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_inventory_log_item ON inventory_log(pantry_item_id);
+
+-- =========================
+-- RECIPES
+-- =========================
+
+CREATE TABLE recipes (
+  id                BIGSERIAL PRIMARY KEY,
+  user_id            BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title             VARCHAR(255) NOT NULL,
+  description       TEXT,
+  instructions      TEXT,
+  servings          INTEGER DEFAULT 1,
+  prep_time_minutes INTEGER,
+  calories_per_serving INTEGER,
+  protein_g_per_serving NUMERIC(10,2),
+  created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_recipes_user ON recipes(user_id);
+CREATE INDEX idx_recipes_title ON recipes(title);
+
+-- =========================
+-- RECIPE INGREDIENTS
+-- =========================
+
+CREATE TABLE recipe_ingredients (
+  id                BIGSERIAL PRIMARY KEY,
+  recipe_id          BIGINT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  pantry_item_name   VARCHAR(255) NOT NULL,
+  quantity           NUMERIC(10,2),
+  unit               VARCHAR(50),
+  optional           BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX idx_recipe_ingredients_recipe ON recipe_ingredients(recipe_id);
+
+-- =========================
+-- MEAL PLAN
+-- =========================
+
+CREATE TABLE meal_plan_entries (
+  id                BIGSERIAL PRIMARY KEY,
+  user_id            BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  recipe_id          BIGINT REFERENCES recipes(id) ON DELETE SET NULL,
+  planned_date       DATE NOT NULL,
+  meal_type          VARCHAR(50) NOT NULL, -- breakfast, lunch, dinner
+  servings           NUMERIC(10,2) NOT NULL DEFAULT 1,
+  status             VARCHAR(50) NOT NULL DEFAULT 'planned', -- planned, cooked, skipped
+  notes              TEXT,
+  created_at         TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_meal_plan_entries_user_date ON meal_plan_entries(user_id, planned_date);
+
+-- =========================
+-- SHOPPING LIST
+-- =========================
+
+CREATE TABLE shopping_list_items (
+  id                BIGSERIAL PRIMARY KEY,
+  user_id            BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name               VARCHAR(255) NOT NULL,
+  quantity           NUMERIC(10,2),
+  unit               VARCHAR(50),
+  status             VARCHAR(50) NOT NULL DEFAULT 'needed', -- needed, bought
+  source_recipe_id   BIGINT REFERENCES recipes(id) ON DELETE SET NULL,
+  created_at         TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_shopping_list_items_user_status ON shopping_list_items(user_id, status);
+```
+
+---
+
+# 12. Why this simplified schema is better for the first version
+
+This version is intentionally less complex.
+
+## It removes:
+- household tables
+- shared access
+- stock lots
+- multiple storage relationships
+- detailed nutrient modeling
+- advanced ingredient matching tables
+
+## It keeps:
+- barcode-assisted products
+- pantry items with quantities and expiry
+- simple recipes
+- meal planning
+- pantry deduction support
+- shopping list
+- user nutrition guidance
+
+That makes it more realistic for a low-friction first product.
+
+---
+
+# 13. Key App Logic in Plain English
+
+## When scanning an item
+- app looks up barcode in `products`
+- fills item details if found
+- user confirms quantity, location, expiry
+- app creates or updates `pantry_items`
+
+## When planning meals
+- app compares recipe ingredient names against pantry item names
+- app estimates whether ingredients are available or missing
+
+## When marking a meal cooked
+- app reduces matching pantry item quantities
+- app adds a record to `inventory_log`
+
+## When showing Home
+The app should display:
+- pantry items expiring soon
+- pantry items below low stock threshold
+- meal ideas that match pantry contents
+- next planned meal
+
+---
+
+# 14. Simple UX Summary for Designer + Product Team
+
+This app should not look like enterprise software.
+It should not behave like a complex tracker.
+It should feel like a personal kitchen checklist with a little intelligence.
+
+## The best design benchmark is:
+- fast grocery capture
+- very simple list management
+- soft planning assistance
+- almost no learning curve
+
+## The experience should reduce three kinds of effort:
+- remembering what is in the kitchen
+- deciding what to cook
+- updating pantry records manually
+
+---
+
+# 15. Simple Product Statement
+
+A simple single-user pantry web app that helps a household quickly record groceries, track what is available, plan meals from pantry contents, and automatically keep stock up to date after cooking — all through a calm, low-friction interface with minimal input and low cognitive load.
