@@ -1,0 +1,9 @@
+{
+  "name": "Pantry",
+  "short_name": "Pantry",
+  "description": "Kitchen stock, scan, and meal planning",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#f7f5f2",
+  "theme_color": "#2d6a4f"
+}
