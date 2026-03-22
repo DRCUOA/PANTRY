@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Simplify meal scheduling gestures",
+  "problem_statement": "Meal scheduling currently combines full-page week swipe press-and-hold drag and a move-or-duplicate decision modal after drop. That gesture stack is powerful but too easy to trigger accidentally on touch devices and too costly for a lightweight planning flow.",
+  "in_scope": [
+    "Limit week swipe handling to the plan calendar frame instead of the full page",
+    "Make touch drag-drop move by default and remove the post-drop move-or-duplicate modal",
+    "Move duplicate into an explicit action inside meal detail while keeping Prev Next and This week controls"
+  ],
+  "out_of_scope": [
+    "Meal plan data model changes",
+    "Desktop keyboard DnD redesign",
+    "New calendar interaction patterns outside the current week view"
+  ],
+  "requirements": [
+    "Dropping on the same day is a no-op",
+    "Touch drag hold delay increases to 300ms to reduce accidental drags",
+    "Duplicate remains available through explicit meal detail UI"
+  ],
+  "acceptance_criteria": [
+    "Dragging to a new day moves the meal immediately without a follow-up choice modal",
+    "Swiping outside the calendar frame no longer changes week",
+    "A user can still duplicate a meal from meal detail without using drag-drop"
+  ],
+  "dependencies": [
+    "P1-uix-02 mobile sheet behavior",
+    "P3-uix-05 plan workflow structure"
+  ],
+  "risks": [
+    "Removing duplicate from the drop flow may hide the capability if the meal detail action is not prominent"
+  ],
+  "implementation_notes": "Update src/components/PlanSwipeContainer.tsx src/components/PlanScheduleDnd.tsx and src/components/PlanMealTile.tsx. Keep the drag handle pattern but shorten the instruction copy once duplication is no longer part of drop handling."
+}

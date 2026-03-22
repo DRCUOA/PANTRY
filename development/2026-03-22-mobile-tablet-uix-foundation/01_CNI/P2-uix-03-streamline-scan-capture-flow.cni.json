@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Streamline scan capture flow",
+  "problem_statement": "The scan screen mixes live camera capture with the full manual form, which makes the fast path feel heavier than it is. Repeated grocery capture requires too much visual scanning even when the user only needs to confirm a product and save.",
+  "in_scope": [
+    "Make scan mode camera-first with a compact confirm flow before showing secondary fields",
+    "Collapse advanced fields behind an explicit reveal while keeping manual entry available",
+    "Preserve quantity unit and location defaults across repeated saves and auto-resume the camera after save in scan mode"
+  ],
+  "out_of_scope": [
+    "Changing barcode lookup providers",
+    "Adding OCR or receipt parsing",
+    "Changing product database schema"
+  ],
+  "requirements": [
+    "Manual entry remains available as a first-class alternate mode",
+    "Unknown barcode flow supports quick naming without forcing the full expanded form first",
+    "Phone scan mode shows one primary task region at a time"
+  ],
+  "acceptance_criteria": [
+    "Saving a scanned item resumes the camera automatically when scan mode remains active",
+    "Advanced fields stay collapsed until requested during the normal scan-confirm-save path",
+    "Quantity unit and location values persist between consecutive scan saves in one session"
+  ],
+  "dependencies": [
+    "P1-uix-02 mobile sheet behavior"
+  ],
+  "risks": [
+    "Auto-resume camera behavior may feel abrupt if save feedback is not visible long enough"
+  ],
+  "implementation_notes": "Keep the existing /api/products/barcode contract unchanged. Update src/components/ScanClient.tsx only for flow and presentation behavior."
+}

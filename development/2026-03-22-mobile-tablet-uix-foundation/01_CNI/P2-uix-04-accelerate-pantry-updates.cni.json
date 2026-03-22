@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Accelerate pantry updates",
+  "problem_statement": "Pantry maintenance is frequent low-attention work, but the current edit sheet opens a full form even for simple stock changes. Optional fields compete with the common tasks of adjusting quantity marking an item used up or correcting a location.",
+  "in_scope": [
+    "Convert pantry item editing into a quick-action first sheet",
+    "Keep name quantity unit and used-up action in the initial visible section",
+    "Move expiry location and low-stock threshold into a collapsed secondary section and improve row summaries for low or expiring state"
+  ],
+  "out_of_scope": [
+    "Batch multi-select pantry actions",
+    "Pantry table or schema changes",
+    "Changing search or filter taxonomy"
+  ],
+  "requirements": [
+    "The first sheet view supports the common quantity-correction workflow without expanding secondary fields",
+    "Used-up remains reachable from the first sheet view",
+    "Search and existing pantry filters keep their current behavior"
+  ],
+  "acceptance_criteria": [
+    "Optional fields are hidden behind explicit reveal by default",
+    "Low-stock and expiring state is visible in the row summary before opening the sheet",
+    "Common pantry updates require less on-screen form scanning than the current full-form sheet"
+  ],
+  "dependencies": [
+    "P1-uix-02 mobile sheet behavior"
+  ],
+  "risks": [
+    "Over-compressing the sheet could make rare fields too hard to find if secondary labeling is weak"
+  ],
+  "implementation_notes": "Update src/components/PantryEditSheet.tsx and the pantry row presentation in src/app/(app)/pantry/page.tsx. Keep delete and full edit capabilities available inside the same sheet."
+}

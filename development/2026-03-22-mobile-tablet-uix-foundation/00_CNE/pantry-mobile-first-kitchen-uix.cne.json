@@ -1,0 +1,43 @@
+{
+  "title": "[EPIC]: Mobile-First Kitchen UX — Reduce phone and tablet friction before AI planning",
+  "label": "epic",
+  "summary": "Rework the current touch experience so scanning, pantry maintenance, and meal planning feel lighter on phone and clearer on tablet. This epic improves ease of use without adding product weight and creates a calmer base for a later AI suggestions epic.",
+  "problem_hl": "The app already covers the right workflows, but several core screens now ask too much from a small touch surface. Long stacked pages, mixed-purpose screens, crowded fixed navigation, and gesture-heavy planning interactions increase effort during the short kitchen sessions the product is supposed to simplify.",
+  "problem_ll": "3",
+  "goals": [
+    "Preserve the current lightweight product feel while reducing taps, scroll distance, and on-screen decision load",
+    "Make phone layouts focus on one primary task region at a time for capture, pantry, and planning workflows",
+    "Use tablet width more deliberately without turning the product into a dense desktop-style interface",
+    "Standardize overlay and sheet behavior so touch interactions feel predictable across the app",
+    "Defer AI features until the base UX is calm enough to absorb recommendations without adding noise"
+  ],
+  "scope": [
+    "Phase 1: Simplify shell navigation and unify reusable mobile interaction patterns",
+    "Phase 2: Optimize scan and pantry maintenance workflows for quick repeated touch use",
+    "Phase 3: Rebuild the plan workflow for phone-first navigation and clearer meal scheduling gestures"
+  ],
+  "out_of_scope": [
+    "AI meal suggestions",
+    "AI recipe generation",
+    "Nutrition model redesign",
+    "Barcode provider changes",
+    "Database schema changes",
+    "Auth flow redesign beyond incidental visual consistency"
+  ],
+  "acceptance": [
+    "On phone widths the default plan experience presents one primary panel at a time using the panel query state",
+    "Bottom navigation remains fully usable above mobile safe areas and no longer includes the theme toggle",
+    "Scan mode supports repeated item capture while preserving prior quantity unit and location defaults between saves",
+    "Pantry common updates can be completed from the first sheet view without exposing optional fields by default",
+    "Week swipe only triggers from the plan calendar region and touch drag-drop no longer requires a move-or-duplicate decision modal",
+    "Pantry edit meal detail and recipe detail use one shared sheet behavior model"
+  ],
+  "child_issues": [
+    "P1-uix-01 mobile app shell",
+    "P1-uix-02 mobile sheet behavior",
+    "P2-uix-03 scan capture flow",
+    "P2-uix-04 pantry quick updates",
+    "P3-uix-05 plan workflow structure",
+    "P3-uix-06 meal scheduling gestures"
+  ]
+}
