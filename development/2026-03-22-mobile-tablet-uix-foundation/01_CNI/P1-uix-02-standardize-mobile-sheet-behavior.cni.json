@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Standardize mobile sheet behavior",
+  "problem_statement": "Pantry edit meal detail recipe detail and other mobile overlays each implement their own sheet behavior. The duplicated logic risks inconsistent close gestures scroll locking footer actions and safe-area handling across touch devices.",
+  "in_scope": [
+    "Introduce one shared mobile sheet primitive in src/components",
+    "Migrate pantry item detail meal detail and recipe detail onto the shared sheet pattern",
+    "Standardize title region close affordance body scrolling and footer action layout"
+  ],
+  "out_of_scope": [
+    "Adding a third-party modal library",
+    "Desktop modal redesign",
+    "Changing server action contracts"
+  ],
+  "requirements": [
+    "The shared sheet supports safe-area padding body scroll lock outside click close and Escape close",
+    "The shared sheet supports long content without clipping footer actions",
+    "Migrated flows preserve their current edit and submit capabilities"
+  ],
+  "acceptance_criteria": [
+    "Pantry detail meal detail and recipe detail all use the shared sheet primitive",
+    "Sheet close behavior is consistent across touch and keyboard interactions",
+    "Footer actions remain reachable on phone portrait with long scrollable content"
+  ],
+  "dependencies": [],
+  "risks": [
+    "Scroll locking may regress nested form behavior if body state is not restored correctly"
+  ],
+  "implementation_notes": "Migrate src/components/PantryEditSheet.tsx src/components/PlanMealTile.tsx and src/components/RecipeLibraryRow.tsx first. Do not introduce a heavyweight dependency for this pass."
+}

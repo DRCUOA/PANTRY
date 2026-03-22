@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Restructure plan workflow",
+  "problem_statement": "The current plan page stacks scheduling add-meal recipes imports and shopping into one long page. On phone this creates too much context switching inside one scroll path, and on tablet it still underuses the available width.",
+  "in_scope": [
+    "Add panel query state with schedule recipes and shopping modes and default to schedule",
+    "Render a segmented phone switcher so only one primary plan panel is visible at a time",
+    "Keep calendar and add-meal inside schedule move recipe and import controls into recipes move manual add and shopping list into shopping and render recipes plus shopping side by side below schedule on tablet"
+  ],
+  "out_of_scope": [
+    "AI recipe ranking",
+    "Recipe schema changes",
+    "Cross-page plan analytics"
+  ],
+  "requirements": [
+    "The plan panel state is deep-linkable through the URL",
+    "Phone plan layout shows one primary panel at a time",
+    "Tablet layout keeps recipes and shopping visible without recreating the current long stacked page"
+  ],
+  "acceptance_criteria": [
+    "Visiting /plan without a panel param renders the schedule view",
+    "Recipes and shopping no longer appear below the phone schedule panel by default",
+    "Tablet width shows recipes and shopping in parallel cards below the schedule section"
+  ],
+  "dependencies": [],
+  "risks": [
+    "Segmented state may feel unstable if it is stored only in client state instead of the route"
+  ],
+  "implementation_notes": "Use searchParams in src/app/(app)/plan/page.tsx for panel state. Update src/components/RecipeLibrarySection.tsx and responsive plan layout styles in src/app/globals.css to match the new structure."
+}

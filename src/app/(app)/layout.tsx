@@ -8,8 +8,8 @@ export default async function AppShellLayout({ children }: { children: React.Rea
     redirect("/login");
   }
   return (
-    <div className="flex min-h-full flex-col pb-32 md:pb-36">
-      <main className="safe-pt mx-auto w-full max-w-3xl flex-1 px-4 pt-6 md:px-8 md:pt-8">
+    <div className="flex min-h-full flex-col pb-28 md:pb-24">
+      <main className="safe-pt mx-auto w-full max-w-5xl flex-1 px-4 pt-5 md:px-8 md:pt-8">
         {children}
       </main>
       <BottomNav />

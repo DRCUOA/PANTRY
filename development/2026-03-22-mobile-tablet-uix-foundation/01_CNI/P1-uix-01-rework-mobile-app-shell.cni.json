@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Rework mobile app shell",
+  "problem_statement": "The fixed bottom navigation currently carries five labels plus the theme toggle, which competes with the app's real tasks on small screens. Shell spacing is also static, so some views feel cramped on phone while tablet layouts still underuse the available width.",
+  "in_scope": [
+    "Remove the theme toggle from bottom navigation and surface appearance controls only in Settings",
+    "Keep the current five destinations while making Scan the visually primary navigation action",
+    "Retune shell spacing and bottom padding so content clears the nav and safe-area consistently on phone and tablet"
+  ],
+  "out_of_scope": [
+    "Changing destination order",
+    "Adding new top-level screens",
+    "Adding AI entry points"
+  ],
+  "requirements": [
+    "Bottom navigation keeps Home Pantry Scan Plan Settings in the current order",
+    "Theme switching is no longer rendered inside the bottom navigation",
+    "Shell padding accounts for nav height and safe-area so primary controls do not sit behind the nav"
+  ],
+  "acceptance_criteria": [
+    "Phone views no longer show the theme toggle in the bottom nav",
+    "Scan is the most visually emphasized nav item without changing route structure",
+    "Core screens remain fully visible and tappable above the bottom nav on iPhone and iPad viewport sizes"
+  ],
+  "dependencies": [],
+  "risks": [
+    "Tablet spacing may feel too sparse if shell width and padding are not tuned together"
+  ],
+  "implementation_notes": "Update src/app/(app)/layout.tsx src/components/BottomNav.tsx and shell spacing rules in src/app/globals.css. Keep the product visually quiet rather than adding extra iconography or badges."
+}
