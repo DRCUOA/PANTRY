@@ -33,27 +33,29 @@ export function RecipeLibrarySection({
 
   return (
     <div>
-      <div
-        className="mt-3 flex flex-wrap gap-1 rounded-lg border border-[var(--border-strong)] bg-[var(--surface-inset)] p-1"
-        role="tablist"
-        aria-label="Filter recipes by meal"
-      >
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => setTab(t.id)}
-            className={`tap-target flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold min-[400px]:flex-none ${
-              tab === t.id
-                ? "bg-[var(--background)] text-[var(--accent)] shadow-sm"
-                : "text-[var(--muted)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="mt-3 overflow-x-auto pb-1">
+        <div
+          className="inline-flex min-w-full gap-1 rounded-lg border border-[var(--border-strong)] bg-[var(--surface-inset)] p-1"
+          role="tablist"
+          aria-label="Filter recipes by meal"
+        >
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              onClick={() => setTab(t.id)}
+              className={`tap-target min-w-[110px] flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold ${
+                tab === t.id
+                  ? "bg-[var(--background)] text-[var(--accent)] shadow-sm"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {recipes.length === 0 ? (

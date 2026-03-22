@@ -10,10 +10,12 @@ const MAX_VERTICAL_DRIFT = 100;
  * Swipe horizontally on the plan screen to change week (tablet / touch).
  */
 export function PlanSwipeContainer({
-  weekOffset,
+  prevHref,
+  nextHref,
   children,
 }: {
-  weekOffset: number;
+  prevHref: string;
+  nextHref: string;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -38,18 +40,18 @@ export function PlanSwipeContainer({
       start.current = null;
       if (dy > MAX_VERTICAL_DRIFT) return;
       if (dx > SWIPE_THRESHOLD_PX) {
-        router.push(`/plan?week=${weekOffset - 1}`);
+        router.push(prevHref);
         if (typeof navigator !== "undefined" && navigator.vibrate) {
           navigator.vibrate(12);
         }
       } else if (dx < -SWIPE_THRESHOLD_PX) {
-        router.push(`/plan?week=${weekOffset + 1}`);
+        router.push(nextHref);
         if (typeof navigator !== "undefined" && navigator.vibrate) {
           navigator.vibrate(12);
         }
       }
     },
-    [router, weekOffset],
+    [nextHref, prevHref, router],
   );
 
   return (
