@@ -23,6 +23,24 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
 
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    userId: bigint("user_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+    usedAt: timestamp("used_at", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("password_reset_tokens_token_hash_unique").on(t.tokenHash),
+    index("password_reset_tokens_user_id_idx").on(t.userId),
+  ],
+);
+
 export const userSettings = pgTable("user_settings", {
   userId: bigint("user_id", { mode: "number" })
     .primaryKey()
@@ -114,6 +132,8 @@ export const recipes = pgTable(
     prepTimeMinutes: integer("prep_time_minutes"),
     caloriesPerServing: integer("calories_per_serving"),
     proteinGPerServing: numeric("protein_g_per_serving", { precision: 10, scale: 2 }),
+    /** Plan recipe library tab: breakfast, lunch, dinner, or snack. */
+    mealType: varchar("meal_type", { length: 20 }).notNull().default("breakfast"),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
   },
@@ -184,10 +204,15 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [userSettings.userId],
   }),
+  passwordResetTokens: many(passwordResetTokens),
   pantryItems: many(pantryItems),
   recipes: many(recipes),
   mealPlanEntries: many(mealPlanEntries),
   shoppingListItems: many(shoppingListItems),
+}));
+
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, { fields: [passwordResetTokens.userId], references: [users.id] }),
 }));
 
 export const pantryItemsRelations = relations(pantryItems, ({ one, many }) => ({

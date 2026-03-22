@@ -3,12 +3,16 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { registerAction, type ActionResult } from "@/actions/auth";
+import { InstructionIcon } from "@/components/InstructionIcon";
 
 export function RegisterForm() {
   const [state, action, pending] = useActionState(registerAction, undefined as ActionResult | undefined);
 
   return (
-    <form action={action} className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm">
+    <form
+      action={action}
+      className="panel-bordered space-y-4 border-2 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.25)]"
+    >
       {state?.ok === false && (
         <p className="rounded-lg bg-[var(--warn-bg)] px-3 py-2 text-sm text-[var(--warn)]" role="alert">
           {state.error}
@@ -22,7 +26,7 @@ export function RegisterForm() {
           id="name"
           name="name"
           type="text"
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+          className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
         />
       </div>
       <div>
@@ -35,12 +39,13 @@ export function RegisterForm() {
           type="email"
           required
           autoComplete="email"
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+          className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
         />
       </div>
       <div>
-        <label htmlFor="password" className="mb-1 block text-sm font-medium">
+        <label htmlFor="password" className="mb-1 flex items-center gap-1 text-sm font-medium">
           Password
+          <InstructionIcon text="Use at least 8 characters." className="-mt-0.5" />
         </label>
         <input
           id="password"
@@ -49,14 +54,13 @@ export function RegisterForm() {
           required
           minLength={8}
           autoComplete="new-password"
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+          className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
         />
-        <p className="mt-1 text-xs text-[var(--muted)]">At least 8 characters</p>
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-xl bg-[var(--accent)] py-3 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
+        className="btn-primary-touch w-full bg-[var(--accent)] font-semibold text-white disabled:opacity-60"
       >
         {pending ? "Creating…" : "Create account"}
       </button>

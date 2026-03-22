@@ -18,7 +18,13 @@ export type PantryItemDTO = {
   notes: string | null;
 };
 
-export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
+export function PantryEditSheet({
+  item,
+  locationSuggestions = [],
+}: {
+  item: PantryItemDTO;
+  locationSuggestions?: string[];
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -38,7 +44,7 @@ export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3 text-left text-sm hover:border-[var(--accent)]"
+        className="receipt-card w-full min-h-[52px] py-3 text-left text-sm active:bg-[var(--surface-inset)]"
       >
         <div className="flex justify-between gap-2">
           <span className="font-medium">{item.name}</span>
@@ -55,9 +61,9 @@ export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4">
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-lg sm:rounded-2xl"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border-2 border-[var(--border-strong)] bg-[var(--surface)] p-5 shadow-[0_-8px_40px_rgba(0,0,0,0.5)] sm:rounded-2xl sm:border-[var(--border-accent)]"
             role="dialog"
             aria-modal
             aria-labelledby="edit-title"
@@ -86,7 +92,7 @@ export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
                   name="name"
                   defaultValue={item.name}
                   required
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+                  className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -96,7 +102,7 @@ export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
                     name="quantity"
                     defaultValue={item.quantity}
                     required
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+                    className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
                   />
                 </div>
                 <div>
@@ -105,7 +111,7 @@ export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
                     name="unit"
                     defaultValue={item.unit}
                     required
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+                    className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
                   />
                 </div>
               </div>
@@ -115,15 +121,22 @@ export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
                   name="expirationDate"
                   type="date"
                   defaultValue={item.expirationDate ?? ""}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+                  className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
                 />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium">Location</label>
+                <datalist id={`pantry-loc-${item.id}`}>
+                  {locationSuggestions.map((loc) => (
+                    <option key={loc} value={loc} />
+                  ))}
+                </datalist>
                 <input
                   name="location"
+                  list={`pantry-loc-${item.id}`}
                   defaultValue={item.location ?? ""}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+                  autoComplete="off"
+                  className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
                 />
               </div>
               <div>
@@ -131,13 +144,13 @@ export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
                 <input
                   name="lowStockThreshold"
                   defaultValue={item.lowStockThreshold ?? ""}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+                  className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
                 />
               </div>
               <button
                 type="submit"
                 disabled={pending}
-                className="mt-2 w-full rounded-xl bg-[var(--accent)] py-3 text-sm font-medium text-white disabled:opacity-50"
+                className="btn-primary-touch mt-2 w-full bg-[var(--accent)] font-semibold text-white disabled:opacity-50"
               >
                 Save
               </button>
@@ -151,7 +164,7 @@ export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
                     await markPantryItemUsedUp(item.id);
                   })
                 }
-                className="w-full rounded-xl border border-[var(--border)] py-3 text-sm disabled:opacity-50"
+                className="btn-primary-touch w-full border-2 border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--foreground)] disabled:opacity-50"
               >
                 Mark used up
               </button>
@@ -164,14 +177,14 @@ export function PantryEditSheet({ item }: { item: PantryItemDTO }) {
                     await deletePantryItem(item.id);
                   });
                 }}
-                className="w-full rounded-xl py-3 text-sm text-[var(--danger)] disabled:opacity-50"
+                className="tap-target w-full text-base font-semibold text-[var(--danger)] disabled:opacity-50"
               >
                 Delete
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="w-full rounded-xl py-3 text-sm text-[var(--muted)]"
+                className="tap-target w-full text-[var(--muted)]"
               >
                 Cancel
               </button>

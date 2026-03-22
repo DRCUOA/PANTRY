@@ -4,7 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { shoppingListItems } from "@/db/schema";
+import { pantryItems, shoppingListItems } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 
 async function requireUserId(): Promise<number> {
@@ -25,8 +25,13 @@ export async function listShoppingItems() {
 
 export async function addShoppingItem(formData: FormData): Promise<void> {
   const userId = await requireUserId();
+  const pantryRaw = formData.get("pantryItemId");
+  const pid =
+    typeof pantryRaw === "string" && pantryRaw.trim() !== ""
+      ? Number(pantryRaw)
+      : Number.NaN;
   const schema = z.object({
-    name: z.string().min(1).max(255),
+    name: z.string().max(255),
     quantity: z
       .string()
       .optional()
@@ -42,11 +47,29 @@ export async function addShoppingItem(formData: FormData): Promise<void> {
   if (!parsed.success) {
     return;
   }
-  const v = parsed.data;
+  let v = parsed.data;
   const db = getDb();
+  if (Number.isFinite(pid) && pid > 0) {
+    const rows = await db
+      .select()
+      .from(pantryItems)
+      .where(and(eq(pantryItems.id, pid), eq(pantryItems.userId, userId)))
+      .limit(1);
+    const row = rows[0];
+    if (row) {
+      v = {
+        name: row.name,
+        quantity: v.quantity ?? String(row.quantity),
+        unit: v.unit?.trim() ? v.unit : row.unit,
+      };
+    }
+  }
+  if (!v.name.trim()) {
+    return;
+  }
   await db.insert(shoppingListItems).values({
     userId,
-    name: v.name,
+    name: v.name.trim(),
     quantity: v.quantity,
     unit: v.unit || null,
     status: "needed",

@@ -1,6 +1,13 @@
 import { LoginForm } from "@/components/LoginForm";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reset?: string }>;
+}) {
+  const sp = await searchParams;
+  const resetSuccess = sp.reset === "1";
+
   return (
     <div className="w-full max-w-sm space-y-8">
       <div className="text-center">
@@ -9,7 +16,7 @@ export default function LoginPage() {
         </h1>
         <p className="mt-2 text-sm text-[var(--muted)]">Sign in to continue</p>
       </div>
-      <LoginForm />
+      <LoginForm resetSuccess={resetSuccess} />
     </div>
   );
 }

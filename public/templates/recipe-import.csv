@@ -1,0 +1,2 @@
+title,description,instructions,servings,prepTimeMinutes,caloriesPerServing,proteinGPerServing,meal_type,ingredients
+"One-pot pasta","Quick weeknight dinner","Boil pasta; add sauce; simmer 10 minutes.",4,25,480,"22",dinner,"[{""pantryItemName"":""pasta"",""quantity"":""400"",""unit"":""g"",""optional"":false},{""pantryItemName"":""tomato sauce"",""quantity"":""1"",""unit"":""jar"",""optional"":false}]"

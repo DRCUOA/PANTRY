@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listPantryItems, type PantryFilter } from "@/actions/pantry";
+import { listPantryItems, listPantryLocationSuggestions, type PantryFilter } from "@/actions/pantry";
 import { PantryEditSheet, type PantryItemDTO } from "@/components/PantryEditSheet";
 
 const FILTERS: { key: PantryFilter; label: string }[] = [
@@ -38,27 +38,31 @@ export default async function PantryPage({
     ? (sp.filter as PantryFilter)
     : "all";
   const items = await listPantryItems(q, filter);
+  const locationSuggestions = await listPantryLocationSuggestions();
 
   return (
     <div className="space-y-6 pb-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="font-serif text-2xl font-semibold tracking-tight">Pantry</h1>
-        <Link href="/scan" className="text-sm font-medium text-[var(--accent)]">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight md:text-3xl">Pantry</h1>
+        <Link
+          href="/scan"
+          className="tap-target rounded-lg border border-[var(--border-accent)] bg-[var(--accent-subtle)] px-4 text-sm font-semibold text-[var(--accent)]"
+        >
           Add
         </Link>
       </div>
 
-      <form method="get" className="flex gap-2">
+      <form method="get" className="panel-bordered flex flex-wrap gap-2">
         <input type="hidden" name="filter" value={filter} />
         <input
           name="q"
           defaultValue={q}
           placeholder="Search…"
-          className="min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+          className="input-touch min-w-0 flex-1 border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted)]"
         />
         <button
           type="submit"
-          className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--muted)]"
+          className="btn-primary-touch border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--foreground)]"
         >
           Go
         </button>
@@ -72,10 +76,10 @@ export default async function PantryPage({
             <Link
               key={key}
               href={href}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+              className={`tap-target rounded-full px-4 text-sm font-semibold ${
                 active
                   ? "bg-[var(--accent)] text-white"
-                  : "border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]"
+                  : "border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--muted)]"
               }`}
             >
               {label}
@@ -90,7 +94,7 @@ export default async function PantryPage({
         <ul className="space-y-2">
           {items.map((row) => (
             <li key={row.id}>
-              <PantryEditSheet item={toDto(row)} />
+              <PantryEditSheet item={toDto(row)} locationSuggestions={locationSuggestions} />
             </li>
           ))}
         </ul>

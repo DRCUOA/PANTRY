@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/run-next.mjs dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/run-next.mjs start",
     "lint": "eslint",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
@@ -14,6 +14,8 @@
     "db:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "barcode-detector": "^3.1.1",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.1",
     "iron-session": "^8.0.4",

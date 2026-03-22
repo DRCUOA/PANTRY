@@ -4,7 +4,7 @@ import { and, asc, eq, ilike, isNotNull, lte, or, sql, type SQL } from "drizzle-
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { inventoryLog, pantryItems } from "@/db/schema";
+import { inventoryLog, pantryItems, products } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 
 async function requireUserId(): Promise<number> {
@@ -48,6 +48,32 @@ export async function createPantryItem(formData: FormData) {
     return { ok: false as const, error: "Invalid quantity" };
   }
   const db = getDb();
+
+  let resolvedProductId = v.productId && Number.isFinite(v.productId) ? v.productId : null;
+  const cleanBarcode = v.barcode ? v.barcode.replace(/\D/g, "") || null : null;
+
+  if (!resolvedProductId && cleanBarcode) {
+    const existing = await db
+      .select({ id: products.id })
+      .from(products)
+      .where(eq(products.barcode, cleanBarcode))
+      .limit(1);
+
+    if (existing[0]) {
+      resolvedProductId = existing[0].id;
+    } else {
+      const [created] = await db
+        .insert(products)
+        .values({
+          barcode: cleanBarcode,
+          name: v.name,
+          defaultUnit: v.unit || null,
+        })
+        .returning({ id: products.id });
+      resolvedProductId = created.id;
+    }
+  }
+
   const [row] = await db
     .insert(pantryItems)
     .values({
@@ -57,13 +83,13 @@ export async function createPantryItem(formData: FormData) {
       unit: v.unit,
       category: v.category || null,
       location: v.location || null,
-      barcode: v.barcode || null,
+      barcode: cleanBarcode,
       expirationDate: v.expirationDate || null,
       lowStockThreshold:
         v.lowStockThreshold != null && Number.isFinite(v.lowStockThreshold)
           ? String(v.lowStockThreshold)
           : null,
-      productId: v.productId && Number.isFinite(v.productId) ? v.productId : null,
+      productId: resolvedProductId,
       notes: v.notes || null,
     })
     .returning({ id: pantryItems.id });
@@ -171,6 +197,51 @@ export async function deletePantryItem(id: number) {
 }
 
 export type PantryFilter = "all" | "expiring" | "low" | "fridge" | "freezer" | "pantry";
+
+/** Compact rows for selects (recipes, shopping). */
+export type PantryPickerRow = {
+  id: number;
+  name: string;
+  unit: string;
+  quantity: string;
+};
+
+export async function listPantryItemsForPickers(): Promise<PantryPickerRow[]> {
+  const userId = await requireUserId();
+  const db = getDb();
+  const rows = await db
+    .select({
+      id: pantryItems.id,
+      name: pantryItems.name,
+      unit: pantryItems.unit,
+      quantity: pantryItems.quantity,
+    })
+    .from(pantryItems)
+    .where(eq(pantryItems.userId, userId))
+    .orderBy(asc(pantryItems.name));
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    unit: r.unit,
+    quantity: String(r.quantity),
+  }));
+}
+
+/** Distinct non-empty locations for datalist / quick picks. */
+export async function listPantryLocationSuggestions(): Promise<string[]> {
+  const userId = await requireUserId();
+  const db = getDb();
+  const rows = await db
+    .selectDistinct({ location: pantryItems.location })
+    .from(pantryItems)
+    .where(and(eq(pantryItems.userId, userId), isNotNull(pantryItems.location)));
+  const set = new Set<string>();
+  for (const r of rows) {
+    const loc = r.location?.trim();
+    if (loc) set.add(loc);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
 
 export async function listPantryItems(search: string, filter: PantryFilter) {
   const userId = await requireUserId();

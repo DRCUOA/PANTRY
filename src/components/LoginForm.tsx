@@ -4,11 +4,19 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { loginAction, type ActionResult } from "@/actions/auth";
 
-export function LoginForm() {
+export function LoginForm({ resetSuccess }: { resetSuccess?: boolean }) {
   const [state, action, pending] = useActionState(loginAction, undefined as ActionResult | undefined);
 
   return (
-    <form action={action} className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm">
+    <form
+      action={action}
+      className="panel-bordered space-y-4 border-2 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.25)]"
+    >
+      {resetSuccess && (
+        <p className="rounded-lg bg-[var(--accent-subtle)] px-3 py-2 text-sm text-[var(--accent-muted)]" role="status">
+          Your password was updated. Sign in with your new password.
+        </p>
+      )}
       {state?.ok === false && (
         <p className="rounded-lg bg-[var(--warn-bg)] px-3 py-2 text-sm text-[var(--warn)]" role="alert">
           {state.error}
@@ -24,7 +32,7 @@ export function LoginForm() {
           type="email"
           required
           autoComplete="email"
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+          className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
         />
       </div>
       <div>
@@ -37,13 +45,18 @@ export function LoginForm() {
           type="password"
           required
           autoComplete="current-password"
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+          className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
         />
+        <p className="mt-1 text-right text-xs">
+          <Link href="/forgot-password" className="font-medium text-[var(--accent)] hover:underline">
+            Forgot password?
+          </Link>
+        </p>
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-xl bg-[var(--accent)] py-3 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
+        className="btn-primary-touch w-full bg-[var(--accent)] font-semibold text-white disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

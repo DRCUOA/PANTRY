@@ -1,0 +1,1 @@
+ALTER TABLE "recipes" ADD COLUMN "meal_types" text[] DEFAULT ARRAY['breakfast','lunch','dinner']::text[] NOT NULL;

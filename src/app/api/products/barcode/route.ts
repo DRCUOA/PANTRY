@@ -5,6 +5,8 @@ import { products } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 import { fetchOpenFoodFactsProduct } from "@/lib/openfoodfacts";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session.isLoggedIn) {
@@ -17,18 +19,18 @@ export async function GET(request: Request) {
   }
   const clean = code.replace(/\D/g, "");
   if (!clean) {
-    return NextResponse.json({ found: false });
+    return json({ found: false });
   }
 
   const db = getDb();
   const cached = await db.select().from(products).where(eq(products.barcode, clean)).limit(1);
   if (cached[0]) {
-    return NextResponse.json({ found: true, product: cached[0], source: "cache" });
+    return json({ found: true, product: cached[0], source: "db" });
   }
 
   const off = await fetchOpenFoodFactsProduct(clean);
   if (!off) {
-    return NextResponse.json({ found: false });
+    return json({ found: false });
   }
 
   const [row] = await db
@@ -48,5 +50,11 @@ export async function GET(request: Request) {
     })
     .returning();
 
-  return NextResponse.json({ found: true, product: row, source: "openfoodfacts" });
+  return json({ found: true, product: row, source: "openfoodfacts" });
+}
+
+function json(data: unknown) {
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "no-store, max-age=0" },
+  });
 }

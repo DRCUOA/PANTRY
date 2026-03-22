@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const links = [
   { href: "/home", label: "Home" },
@@ -15,10 +16,13 @@ export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md safe-pb"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t-2 border-[var(--border-accent)] bg-[var(--surface)]/98 backdrop-blur-md safe-pb"
       aria-label="Main"
     >
-      <ul className="mx-auto flex max-w-lg items-stretch justify-around gap-0 px-1 py-2">
+      <div className="mx-auto flex max-w-3xl justify-end px-3 pt-2 md:px-4">
+        <ThemeToggle />
+      </div>
+      <ul className="mx-auto flex max-w-3xl items-stretch justify-around gap-0 px-1 pb-2 pt-1 md:px-4">
         {links.map(({ href, label }) => {
           const active =
             pathname === href ||
@@ -28,9 +32,11 @@ export function BottomNav() {
             <li key={href} className="flex-1 text-center">
               <Link
                 href={href}
-                className={`block rounded-lg px-1 py-2 text-xs font-medium transition-colors ${
-                  active ? "text-[var(--accent)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
-                }`}
+                className={`tap-target flex w-full items-center justify-center rounded-lg text-xs font-semibold transition-colors md:text-sm ${
+                  active
+                    ? "bg-[var(--accent-subtle)] text-[var(--accent)]"
+                    : "text-[var(--muted)] active:bg-[var(--surface-elevated)]"
+                } `}
               >
                 {label}
               </Link>

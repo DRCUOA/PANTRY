@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Newsreader } from "next/font/google";
+import Script from "next/script";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { themeBootScript } from "@/lib/theme";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -21,10 +24,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2d6a4f",
+  themeColor: "#ff4500",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  maximumScale: 5,
   viewportFit: "cover",
 };
 
@@ -34,8 +37,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${newsreader.variable} h-full`}>
-      <body className="min-h-full font-sans antialiased">{children}</body>
+    <html lang="en" className={`${dmSans.variable} ${newsreader.variable} h-full`} suppressHydrationWarning>
+      <body className="min-h-full bg-[var(--background)] font-sans antialiased">
+        <Script id="pantry-theme-boot" strategy="beforeInteractive">
+          {themeBootScript()}
+        </Script>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

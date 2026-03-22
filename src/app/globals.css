@@ -1,31 +1,120 @@
 @import "tailwindcss";
 
+/* Tailwind `dark:` follows html.dark (set from resolved theme) */
+@custom-variant dark (&:where(.dark *));
+
+/* Dark + light (system) + accent rgb(255, 69, 0) — tablet-first touch */
 :root {
-  --background: #f7f5f2;
-  --foreground: #1c1917;
-  --surface: #fffcf8;
-  --muted: #78716c;
-  --border: #e7e5e4;
-  --accent: #2d6a4f;
-  --accent-muted: #40916c;
-  --warn: #b45309;
-  --warn-bg: #fff7ed;
-  --danger: #b91c1c;
+  color-scheme: dark;
+  --background: #0f0f12;
+  --foreground: #ececf1;
+  --surface: #16161c;
+  --surface-elevated: #1e1e26;
+  --surface-inset: #121218;
+  --muted: #9898a6;
+  --border: #2e2e38;
+  --border-strong: #3d3d4a;
+  --border-accent: rgba(255, 69, 0, 0.45);
+  --accent: rgb(255, 69, 0);
+  --accent-muted: rgba(255, 69, 0, 0.82);
+  --accent-subtle: rgba(255, 69, 0, 0.12);
+  --accent-glow: rgba(255, 69, 0, 0.22);
+  --warn: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, 0.1);
+  --danger: #f87171;
+  --receipt-stripe: #1a1a22;
+  --touch-min: 48px;
+  /* Plan: “today” from the user’s device (local date) */
+  --today-bg: rgba(34, 197, 94, 0.11);
+  --today-border: rgba(74, 222, 128, 0.42);
+  --today-fg: #86efac;
+  --plan-frame-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --card-inset-shine: rgba(255, 255, 255, 0.04);
+  --scan-dim: rgba(0, 0, 0, 0.55);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1c1917;
-    --foreground: #fafaf9;
-    --surface: #292524;
-    --muted: #a8a29e;
-    --border: #44403c;
-    --accent: #6ee7b7;
-    --accent-muted: #34d399;
-    --warn: #fbbf24;
-    --warn-bg: #422006;
-    --danger: #f87171;
+/* Explicit dark (overrides system light) */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0f0f12;
+  --foreground: #ececf1;
+  --surface: #16161c;
+  --surface-elevated: #1e1e26;
+  --surface-inset: #121218;
+  --muted: #9898a6;
+  --border: #2e2e38;
+  --border-strong: #3d3d4a;
+  --border-accent: rgba(255, 69, 0, 0.45);
+  --accent: rgb(255, 69, 0);
+  --accent-muted: rgba(255, 69, 0, 0.82);
+  --accent-subtle: rgba(255, 69, 0, 0.12);
+  --accent-glow: rgba(255, 69, 0, 0.22);
+  --warn: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, 0.1);
+  --danger: #f87171;
+  --receipt-stripe: #1a1a22;
+  --today-bg: rgba(34, 197, 94, 0.11);
+  --today-border: rgba(74, 222, 128, 0.42);
+  --today-fg: #86efac;
+  --plan-frame-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --card-inset-shine: rgba(255, 255, 255, 0.04);
+  --scan-dim: rgba(0, 0, 0, 0.55);
+}
+
+/* System: follow OS when theme is unset or "system" */
+@media (prefers-color-scheme: light) {
+  :root:is(:not([data-theme]), [data-theme="system"]) {
+    color-scheme: light;
+    --background: #f4f4f7;
+    --foreground: #12121a;
+    --surface: #ffffff;
+    --surface-elevated: #f0f0f5;
+    --surface-inset: #eaeaef;
+    --muted: #5a5a6b;
+    --border: #d6d6e0;
+    --border-strong: #c2c2d0;
+    --border-accent: rgba(255, 69, 0, 0.38);
+    --accent-muted: rgb(230, 62, 0);
+    --accent-subtle: rgba(255, 69, 0, 0.1);
+    --accent-glow: rgba(255, 69, 0, 0.14);
+    --warn: #d97706;
+    --warn-bg: rgba(251, 191, 36, 0.18);
+    --danger: #dc2626;
+    --receipt-stripe: #ebebf0;
+    --today-bg: rgba(34, 197, 94, 0.14);
+    --today-border: rgba(22, 163, 74, 0.45);
+    --today-fg: #15803d;
+    --plan-frame-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+    --card-inset-shine: rgba(0, 0, 0, 0.04);
+    --scan-dim: rgba(0, 0, 0, 0.45);
   }
+}
+
+/* Explicit light (overrides system dark) */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --background: #f4f4f7;
+  --foreground: #12121a;
+  --surface: #ffffff;
+  --surface-elevated: #f0f0f5;
+  --surface-inset: #eaeaef;
+  --muted: #5a5a6b;
+  --border: #d6d6e0;
+  --border-strong: #c2c2d0;
+  --border-accent: rgba(255, 69, 0, 0.38);
+  --accent-muted: rgb(230, 62, 0);
+  --accent-subtle: rgba(255, 69, 0, 0.1);
+  --accent-glow: rgba(255, 69, 0, 0.14);
+  --warn: #d97706;
+  --warn-bg: rgba(251, 191, 36, 0.18);
+  --danger: #dc2626;
+  --receipt-stripe: #ebebf0;
+  --today-bg: rgba(34, 197, 94, 0.14);
+  --today-border: rgba(22, 163, 74, 0.45);
+  --today-fg: #15803d;
+  --plan-frame-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  --card-inset-shine: rgba(0, 0, 0, 0.04);
+  --scan-dim: rgba(0, 0, 0, 0.45);
 }
 
 @theme inline {
@@ -35,12 +124,423 @@
   --font-serif: var(--font-newsreader);
 }
 
+html {
+  -webkit-tap-highlight-color: rgba(255, 69, 0, 0.15);
+}
+
+html[data-theme="light"] {
+  -webkit-tap-highlight-color: rgba(255, 69, 0, 0.22);
+}
+
+html[data-theme="dark"] {
+  -webkit-tap-highlight-color: rgba(255, 69, 0, 0.15);
+}
+
+@media (prefers-color-scheme: light) {
+  html:is(:not([data-theme]), [data-theme="system"]) {
+    -webkit-tap-highlight-color: rgba(255, 69, 0, 0.22);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  /* Tablet: comfortable reading, avoid tiny text */
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  body {
+    font-size: 17px;
+  }
+}
+
+/* Touch: reduce 300ms delay, discourage double-tap zoom on controls */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Minimum tap targets (44–48px recommended) */
+.tap-target {
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.input-touch {
+  min-height: var(--touch-min);
+  padding: 0.65rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+}
+
+.btn-primary-touch {
+  min-height: var(--touch-min);
+  padding: 0.65rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  touch-action: manipulation;
 }
 
 .safe-pb {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.safe-pt {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+/* Plan: outer “calendar book” frame */
+.plan-outer-frame {
+  border: 2px solid var(--border-strong);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border-accent), var(--plan-frame-shadow);
+  overflow: hidden;
+}
+
+.plan-week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid var(--border-strong);
+  background: var(--surface-elevated);
+}
+
+.plan-week-nav a {
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid var(--border-accent);
+  background: var(--accent-subtle);
+}
+
+/* Day column headers (tablet+ grid) */
+.plan-day-headers {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .plan-day-headers {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: 2px solid var(--border-strong);
+    background: var(--surface-inset);
+  }
+
+  .plan-day-headers > .plan-day-header {
+    padding: 0.5rem 0.35rem;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+  }
+
+  .plan-day-headers > .plan-day-header:last-child {
+    border-right: none;
+  }
+
+  .plan-day-header--today {
+    background: var(--today-bg);
+    box-shadow: inset 0 0 0 1px var(--today-border);
+  }
+
+  .plan-day-header--today > div:first-child {
+    color: var(--today-fg);
+  }
+
+  .plan-day-header--today > div:last-child {
+    color: color-mix(in srgb, var(--today-fg) 72%, var(--muted));
+  }
+}
+
+/* Week body: 1 col phone, 7 col tablet */
+.plan-week-body {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .plan-week-body {
+    grid-template-columns: repeat(7, 1fr);
+    min-height: 120px;
+    align-items: stretch;
+  }
+}
+
+.plan-day-cell {
+  border-bottom: 1px solid var(--border-strong);
+  padding: 0.75rem;
+  background: var(--surface);
+}
+
+@media (min-width: 768px) {
+  .plan-day-cell {
+    border-bottom: none;
+    border-right: 1px solid var(--border-strong);
+    min-height: 120px;
+    align-self: stretch;
+  }
+
+  .plan-day-cell:last-child {
+    border-right: none;
+  }
+}
+
+.plan-day-cell--today {
+  background: var(--today-bg);
+  box-shadow: inset 0 0 0 1px var(--today-border);
+}
+
+.plan-day-cell--today .plan-day-label {
+  color: var(--today-fg);
+  border-bottom-color: var(--today-border);
+}
+
+.plan-day-cell--dnd-over {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  background: var(--accent-subtle);
+}
+
+.plan-day-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px dashed var(--border-accent);
+}
+
+@media (min-width: 768px) {
+  .plan-day-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+/* Plan: compact meal chip + drag handle (opens detail modal on main area) */
+.plan-meal-compact-wrap {
+  display: flex;
+  align-items: stretch;
+  margin-top: 0.3rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0.35rem;
+  background: linear-gradient(180deg, var(--surface-elevated) 0%, var(--surface-inset) 100%);
+  box-shadow: inset 0 1px 0 var(--card-inset-shine);
+  overflow: hidden;
+  color: var(--foreground);
+}
+
+.plan-meal-compact-wrap--dragging {
+  opacity: 0.55;
+}
+
+.plan-meal-compact__drag {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+  background: var(--surface-inset);
+  align-self: stretch;
+}
+
+.plan-meal-compact__drag:active {
+  cursor: grabbing;
+}
+
+.plan-meal-compact {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  padding: 0.4rem 0.5rem;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  color: inherit;
+}
+
+.plan-meal-compact:active {
+  filter: brightness(1.05);
+}
+
+.plan-meal-compact__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.plan-meal-compact__meal {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.plan-meal-compact__pill {
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  background: var(--surface-inset);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.plan-meal-compact__title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 0.2rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.plan-meal-compact__meta {
+  font-size: 0.62rem;
+  font-family: ui-monospace, monospace;
+  color: var(--muted);
+  margin-top: 0.12rem;
+  line-height: 1.2;
+}
+
+.plan-meal-compact__warn {
+  color: var(--warn);
+}
+
+/* Meal / receipt-style tile */
+.plan-meal-tile,
+.receipt-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0.25rem;
+  padding: 0.65rem 0.75rem;
+  margin-top: 0.5rem;
+  background: linear-gradient(180deg, var(--surface-elevated) 0%, var(--surface-inset) 100%);
+  box-shadow: inset 0 1px 0 var(--card-inset-shine);
+}
+
+.receipt-card {
+  border-left-width: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt-card-muted {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+}
+
+/* Add-meal panel: ticket stub */
+.plan-form-panel {
+  border: 2px dashed var(--border-accent);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: var(--surface-inset);
+}
+
+/* Section panels elsewhere */
+.panel-bordered {
+  border: 1px solid var(--border-strong);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  padding: 1rem;
+}
+
+.swipe-hint {
+  border-top: 1px solid var(--border);
+  background: var(--surface-inset);
+}
+
+/* Barcode scanner preview: dim outside target, bright frame */
+.scan-barcode-target {
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px var(--scan-dim);
+}
+
+.scan-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: scan-spin 0.7s linear infinite;
+}
+
+@keyframes scan-spin {
+  to { transform: rotate(360deg); }
+}
+
+.scan-crosshair-line-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--accent) 8%,
+    var(--accent) 92%,
+    transparent 100%
+  );
+  opacity: 0.7;
+}
+
+.scan-crosshair-line-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--accent) 6%,
+    var(--accent) 94%,
+    transparent 100%
+  );
+  opacity: 0.7;
 }

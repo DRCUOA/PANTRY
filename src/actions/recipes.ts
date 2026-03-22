@@ -2,10 +2,16 @@
 
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { getDb } from "@/db";
-import { recipeIngredients, recipes } from "@/db/schema";
+import { pantryItems, recipeIngredients, recipes } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
+import { parseMealTypeFromForm, type RecipeMealTypeValue } from "@/lib/recipe-meal-types";
+import {
+  type IngredientLineInput,
+  ingredientLineSchema,
+  type RecipeBaseInput,
+  recipeBaseSchema,
+} from "@/lib/recipe-schemas";
 
 async function requireUserId(): Promise<number> {
   const session = await getSession();
@@ -36,30 +42,103 @@ export async function listRecipes() {
   return list.map((r) => ({ ...r, ingredients: byRecipe.get(r.id) ?? [] }));
 }
 
-const recipeBaseSchema = z.object({
-  title: z.string().min(1).max(255),
-  description: z.string().optional().nullable(),
-  instructions: z.string().optional().nullable(),
-  servings: z.coerce.number().int().min(1).default(1),
-  prepTimeMinutes: z.coerce.number().int().optional().nullable(),
-  caloriesPerServing: z.coerce.number().int().optional().nullable(),
-  proteinGPerServing: z
-    .string()
-    .optional()
-    .nullable()
-    .transform((s) => (s && s !== "" ? String(Number(s)) : null)),
-});
+async function resolveRecipeIngredients(
+  userId: number,
+  ingredients: IngredientLineInput[],
+): Promise<
+  | { ok: true; rows: { pantryItemName: string; quantity: string | null; unit: string | null; optional: boolean }[] }
+  | { ok: false; error: string }
+> {
+  const db = getDb();
+  const ids = [...new Set(ingredients.map((i) => i.pantryItemId).filter((x): x is number => x != null))];
+  let idToName = new Map<number, string>();
+  if (ids.length) {
+    const rows = await db
+      .select({ id: pantryItems.id, name: pantryItems.name })
+      .from(pantryItems)
+      .where(and(eq(pantryItems.userId, userId), inArray(pantryItems.id, ids)));
+    idToName = new Map(rows.map((r) => [r.id, r.name]));
+    if (idToName.size !== ids.length) {
+      return { ok: false, error: "One or more pantry items are invalid" };
+    }
+  }
+  const rows: {
+    pantryItemName: string;
+    quantity: string | null;
+    unit: string | null;
+    optional: boolean;
+  }[] = [];
+  for (const i of ingredients) {
+    let name: string;
+    if (i.pantryItemId != null) {
+      const n = idToName.get(i.pantryItemId);
+      if (!n) return { ok: false, error: "Unknown pantry item" };
+      name = n;
+    } else {
+      name = i.pantryItemName?.trim() ?? "";
+      if (!name) continue;
+    }
+    rows.push({
+      pantryItemName: name,
+      quantity: i.quantity,
+      unit: i.unit || null,
+      optional: i.optional ?? false,
+    });
+  }
+  return { ok: true, rows };
+}
 
-const ingredientLineSchema = z.object({
-  pantryItemName: z.string().min(1).max(255),
-  quantity: z
-    .string()
-    .optional()
-    .nullable()
-    .transform((s) => (s && s !== "" ? String(Number(s)) : null)),
-  unit: z.string().max(50).optional().nullable(),
-  optional: z.coerce.boolean().optional().default(false),
-});
+async function insertRecipe(
+  userId: number,
+  base: RecipeBaseInput,
+  ingredients: IngredientLineInput[],
+  mealType: RecipeMealTypeValue,
+): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+  const resolved = await resolveRecipeIngredients(userId, ingredients);
+  if (!resolved.ok) {
+    return { ok: false, error: resolved.error };
+  }
+  const db = getDb();
+  const v = base;
+  const [r] = await db
+    .insert(recipes)
+    .values({
+      userId,
+      title: v.title,
+      description: v.description || null,
+      instructions: v.instructions || null,
+      servings: v.servings,
+      prepTimeMinutes: v.prepTimeMinutes ?? null,
+      caloriesPerServing: v.caloriesPerServing ?? null,
+      proteinGPerServing: v.proteinGPerServing,
+      mealType,
+    })
+    .returning({ id: recipes.id });
+  if (resolved.rows.length) {
+    await db.insert(recipeIngredients).values(
+      resolved.rows.map((i) => ({
+        recipeId: r.id,
+        pantryItemName: i.pantryItemName,
+        quantity: i.quantity,
+        unit: i.unit || null,
+        optional: i.optional,
+      })),
+    );
+  }
+  revalidatePath("/plan");
+  revalidatePath("/home");
+  return { ok: true, id: r.id };
+}
+
+/** Create a recipe from validated base + ingredient lines (e.g. file import). */
+export async function createRecipeFromImport(
+  base: RecipeBaseInput,
+  ingredients: IngredientLineInput[],
+  mealType: RecipeMealTypeValue,
+): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+  return insertRecipe(userId, base, ingredients, mealType);
+}
 
 export async function createRecipe(formData: FormData) {
   const userId = await requireUserId();
@@ -76,7 +155,7 @@ export async function createRecipe(formData: FormData) {
     return { ok: false as const, error: base.error.issues[0]?.message ?? "Invalid" };
   }
   const ingRaw = formData.get("ingredients_json");
-  let ingredients: z.infer<typeof ingredientLineSchema>[] = [];
+  let ingredients: IngredientLineInput[] = [];
   if (typeof ingRaw === "string" && ingRaw.trim()) {
     try {
       const arr = JSON.parse(ingRaw) as unknown[];
@@ -88,35 +167,12 @@ export async function createRecipe(formData: FormData) {
       return { ok: false as const, error: "Invalid ingredients JSON" };
     }
   }
-  const db = getDb();
-  const v = base.data;
-  const [r] = await db
-    .insert(recipes)
-    .values({
-      userId,
-      title: v.title,
-      description: v.description || null,
-      instructions: v.instructions || null,
-      servings: v.servings,
-      prepTimeMinutes: v.prepTimeMinutes ?? null,
-      caloriesPerServing: v.caloriesPerServing ?? null,
-      proteinGPerServing: v.proteinGPerServing,
-    })
-    .returning({ id: recipes.id });
-  if (ingredients.length) {
-    await db.insert(recipeIngredients).values(
-      ingredients.map((i) => ({
-        recipeId: r.id,
-        pantryItemName: i.pantryItemName,
-        quantity: i.quantity,
-        unit: i.unit || null,
-        optional: i.optional ?? false,
-      })),
-    );
+  const mealType = parseMealTypeFromForm(formData);
+  const result = await insertRecipe(userId, base.data, ingredients, mealType);
+  if (!result.ok) {
+    return { ok: false as const, error: result.error };
   }
-  revalidatePath("/plan");
-  revalidatePath("/home");
-  return { ok: true as const, id: r.id };
+  return { ok: true as const, id: result.id };
 }
 
 export async function updateRecipe(recipeId: number, formData: FormData) {
@@ -134,7 +190,7 @@ export async function updateRecipe(recipeId: number, formData: FormData) {
     return { ok: false as const, error: base.error.issues[0]?.message ?? "Invalid" };
   }
   const ingRaw = formData.get("ingredients_json");
-  let ingredients: z.infer<typeof ingredientLineSchema>[] = [];
+  let ingredients: IngredientLineInput[] = [];
   if (typeof ingRaw === "string" && ingRaw.trim()) {
     try {
       const arr = JSON.parse(ingRaw) as unknown[];
@@ -146,6 +202,10 @@ export async function updateRecipe(recipeId: number, formData: FormData) {
       return { ok: false as const, error: "Invalid ingredients JSON" };
     }
   }
+  const resolved = await resolveRecipeIngredients(userId, ingredients);
+  if (!resolved.ok) {
+    return { ok: false as const, error: resolved.error };
+  }
   const db = getDb();
   const own = await db
     .select()
@@ -154,6 +214,7 @@ export async function updateRecipe(recipeId: number, formData: FormData) {
     .limit(1);
   if (!own[0]) return { ok: false as const, error: "Not found" };
   const v = base.data;
+  const mealType = parseMealTypeFromForm(formData);
   await db
     .update(recipes)
     .set({
@@ -164,18 +225,19 @@ export async function updateRecipe(recipeId: number, formData: FormData) {
       prepTimeMinutes: v.prepTimeMinutes ?? null,
       caloriesPerServing: v.caloriesPerServing ?? null,
       proteinGPerServing: v.proteinGPerServing,
+      mealType,
       updatedAt: new Date(),
     })
     .where(eq(recipes.id, recipeId));
   await db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId));
-  if (ingredients.length) {
+  if (resolved.rows.length) {
     await db.insert(recipeIngredients).values(
-      ingredients.map((i) => ({
+      resolved.rows.map((i) => ({
         recipeId,
         pantryItemName: i.pantryItemName,
         quantity: i.quantity,
         unit: i.unit || null,
-        optional: i.optional ?? false,
+        optional: i.optional,
       })),
     );
   }

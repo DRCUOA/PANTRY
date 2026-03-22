@@ -7,15 +7,23 @@ export function findBestPantryItemId(
   pantryRows: { id: number; name: string }[],
   ingredientName: string,
 ): number | null {
+  const matches = findPantryItemMatches(pantryRows, ingredientName);
+  return matches[0]?.id ?? null;
+}
+
+/** All exact matches first; otherwise all partial substring matches (for import disambiguation). */
+export function findPantryItemMatches(
+  pantryRows: { id: number; name: string }[],
+  ingredientName: string,
+): { id: number; name: string }[] {
   const n = normalizePantryName(ingredientName);
-  if (!n) return null;
-  const exact = pantryRows.find((p) => normalizePantryName(p.name) === n);
-  if (exact) return exact.id;
-  const partial = pantryRows.find((p) => {
+  if (!n) return [];
+  const exact = pantryRows.filter((p) => normalizePantryName(p.name) === n);
+  if (exact.length) return exact;
+  return pantryRows.filter((p) => {
     const pn = normalizePantryName(p.name);
     return pn.includes(n) || n.includes(pn);
   });
-  return partial?.id ?? null;
 }
 
 /**

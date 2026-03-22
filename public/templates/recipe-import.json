@@ -1,0 +1,30 @@
+{
+  "title": "Oven omelet",
+  "description": "Serves a crowd; good for brunch.",
+  "instructions": "Whisk eggs with salt. Fold in vegetables. Bake at 350°F until set.",
+  "servings": 6,
+  "prepTimeMinutes": 15,
+  "caloriesPerServing": 220,
+  "proteinGPerServing": "18",
+  "mealType": "breakfast",
+  "ingredients": [
+    {
+      "pantryItemName": "eggs",
+      "quantity": "8",
+      "unit": "whole",
+      "optional": false
+    },
+    {
+      "pantryItemName": "milk",
+      "quantity": "0.5",
+      "unit": "cup",
+      "optional": false
+    },
+    {
+      "pantryItemName": "cheddar cheese",
+      "quantity": "1",
+      "unit": "cup",
+      "optional": true
+    }
+  ]
+}

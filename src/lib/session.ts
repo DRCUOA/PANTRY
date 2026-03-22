@@ -24,7 +24,8 @@ export function getSessionOptions(): SessionOptions {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 14,
+      // ~400 days — long-lived login; no short rolling timeout (was 14 days).
+      maxAge: 60 * 60 * 24 * 400,
       path: "/",
     },
   };

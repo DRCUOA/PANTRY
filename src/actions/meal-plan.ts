@@ -88,6 +88,110 @@ export async function deleteMealPlanEntry(id: number): Promise<void> {
   revalidatePath("/home");
 }
 
+export async function updateMealPlanEntryDetails(
+  entryId: number,
+  servings: number,
+  notes: string | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+  if (!(Number.isFinite(servings) && servings > 0)) {
+    return { ok: false, error: "Servings must be a positive number" };
+  }
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(mealPlanEntries)
+    .where(and(eq(mealPlanEntries.id, entryId), eq(mealPlanEntries.userId, userId)))
+    .limit(1);
+  if (!rows[0]) return { ok: false, error: "Meal not found" };
+  await db
+    .update(mealPlanEntries)
+    .set({
+      servings: String(servings),
+      notes: notes?.trim() ? notes.trim() : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(mealPlanEntries.id, entryId));
+  revalidatePath("/plan");
+  revalidatePath("/home");
+  return { ok: true };
+}
+
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/** Change which calendar day this meal is on (same slot fields otherwise). */
+export async function moveMealPlanEntryToDate(
+  entryId: number,
+  newPlannedDate: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+  const dateParsed = isoDateSchema.safeParse(newPlannedDate);
+  if (!dateParsed.success) {
+    return { ok: false, error: "Invalid date" };
+  }
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(mealPlanEntries)
+    .where(and(eq(mealPlanEntries.id, entryId), eq(mealPlanEntries.userId, userId)))
+    .limit(1);
+  const row = rows[0];
+  if (!row) return { ok: false, error: "Meal not found" };
+  if (row.plannedDate === newPlannedDate) {
+    return { ok: true };
+  }
+  await db
+    .update(mealPlanEntries)
+    .set({ plannedDate: newPlannedDate, updatedAt: new Date() })
+    .where(eq(mealPlanEntries.id, entryId));
+  revalidatePath("/plan");
+  revalidatePath("/home");
+  return { ok: true };
+}
+
+/**
+ * Add another planned meal on `newPlannedDate` with the same recipe, meal type, and servings
+ * as manual “Add meal” (always status planned).
+ */
+export async function duplicateMealPlanEntryToDate(
+  entryId: number,
+  newPlannedDate: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+  const dateParsed = isoDateSchema.safeParse(newPlannedDate);
+  if (!dateParsed.success) {
+    return { ok: false, error: "Invalid date" };
+  }
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(mealPlanEntries)
+    .where(and(eq(mealPlanEntries.id, entryId), eq(mealPlanEntries.userId, userId)))
+    .limit(1);
+  const row = rows[0];
+  if (!row) return { ok: false, error: "Meal not found" };
+  if (row.recipeId != null) {
+    const r = await db
+      .select()
+      .from(recipes)
+      .where(and(eq(recipes.id, row.recipeId), eq(recipes.userId, userId)))
+      .limit(1);
+    if (!r[0]) return { ok: false, error: "Recipe not found" };
+  }
+  await db.insert(mealPlanEntries).values({
+    userId,
+    recipeId: row.recipeId,
+    plannedDate: newPlannedDate,
+    mealType: row.mealType,
+    servings: row.servings,
+    status: "planned",
+    notes: row.notes ?? null,
+  });
+  revalidatePath("/plan");
+  revalidatePath("/home");
+  return { ok: true };
+}
+
 export async function addMissingToShoppingList(mealPlanId: number): Promise<void> {
   const userId = await requireUserId();
   const db = getDb();
