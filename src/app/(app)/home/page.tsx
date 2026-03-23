@@ -99,6 +99,21 @@ export default async function HomePage() {
         )}
       </section>
 
+      <section className="panel-bordered border-l-4 border-l-[var(--accent)]">
+        <h2 className="border-b border-[var(--border-strong)] pb-2 font-serif text-lg font-semibold">
+          Need a new idea
+        </h2>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          Turn your current pantry into a few reviewable recipe drafts, then save only the ones worth keeping.
+        </p>
+        <Link
+          href="/plan?panel=recipes#ai-recipe-drafts"
+          className="tap-target mt-4 inline-flex rounded-lg border border-[var(--border-accent)] bg-[var(--accent-subtle)] px-3 py-2 text-sm font-semibold text-[var(--accent)]"
+        >
+          Draft recipes from pantry
+        </Link>
+      </section>
+
       <section className="panel-bordered">
         <h2 className="border-b border-[var(--border-strong)] pb-2 font-serif text-lg font-semibold">
           Next planned meal

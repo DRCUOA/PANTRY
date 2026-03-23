@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Expose AI recipe entry points",
+  "problem_statement": "Even a solid AI generation flow will be ignored if it is hidden behind an obscure route or looks like a separate product mode. The feature needs clear entry points that feel native to pantry planning rather than bolted onto the side of the app.",
+  "in_scope": [
+    "Add a primary entry point in the Plan recipes panel for generating pantry-aware drafts",
+    "Optionally surface a secondary entry point on Home where cook ideas already exist",
+    "Add concise explanatory copy so users understand that suggestions come from current pantry stock"
+  ],
+  "out_of_scope": [
+    "Dedicated AI settings screen",
+    "Marketing pages or onboarding tour",
+    "Cross-device notification workflows"
+  ],
+  "requirements": [
+    "The primary entry point must live inside an existing high-intent recipe or planning surface",
+    "The trigger label must communicate pantry-aware generation rather than generic AI text",
+    "Entry points must preserve the current lightweight navigation model"
+  ],
+  "acceptance_criteria": [
+    "A user can discover and trigger AI recipe generation from the existing app flow without hunting through settings",
+    "The entry point language makes pantry context explicit",
+    "Adding the trigger does not require a new top-level navigation destination"
+  ],
+  "dependencies": [
+    "P2-ai-03 AI recipe draft review surface"
+  ],
+  "risks": [
+    "If the trigger is too prominent before quality is proven it may create distrust from weak early drafts",
+    "If the trigger is too subtle the feature will be effectively hidden"
+  ],
+  "implementation_notes": "Start in src/app/(app)/plan/page.tsx near the recipes panel. Consider a small secondary prompt in Home only after the in-flow recipe entry point is stable."
+}

@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Build pantry prompt context pipeline",
+  "problem_statement": "The model cannot generate useful pantry-aware recipes unless the server assembles a compact and reliable representation of current stock, pantry risk signals, and user preferences. If this context is inconsistent or too noisy, the feature will produce generic recipes that ignore the pantry the user actually has.",
+  "in_scope": [
+    "Add a server-side context builder that loads pantry item names quantities units locations and expiration dates for the signed-in user",
+    "Include relevant user settings such as dietary preferences and default kitchen conventions when available",
+    "Define a normalized payload for AI recipe generation that separates in-stock ingredients from advisory metadata such as expiring soon items"
+  ],
+  "out_of_scope": [
+    "Calling the OpenAI API",
+    "Rendering AI recipes in the UI",
+    "Persisting generated recipes"
+  ],
+  "requirements": [
+    "The context builder must only read data for the authenticated user",
+    "The context payload must include enough pantry detail to distinguish on-hand ingredients from expired or nearly expired items",
+    "The payload shape must be serializable and reusable by server actions or route handlers without UI coupling"
+  ],
+  "acceptance_criteria": [
+    "A server-side helper returns a normalized pantry AI context for the current user",
+    "The returned context includes pantry items user dietary preferences and a derived expiring-soon slice when relevant",
+    "The helper can be consumed by later AI generation code without additional DB reads in the UI layer"
+  ],
+  "dependencies": [],
+  "risks": [
+    "Sending too much pantry detail will increase token cost and push the model toward noisy suggestions",
+    "Loose normalization may make duplicate pantry names look like separate ingredients to the model"
+  ],
+  "implementation_notes": "Start with server helpers near the recipe or AI action layer. Reuse pantry rows already modeled in src/db/schema.ts and bias toward a compact prompt payload rather than raw DB records."
+}

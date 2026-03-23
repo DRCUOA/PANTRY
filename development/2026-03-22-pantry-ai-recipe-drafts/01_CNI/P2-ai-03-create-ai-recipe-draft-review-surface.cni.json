@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Create AI recipe draft review surface",
+  "problem_statement": "Generated recipes are only useful if the user can review them quickly and decide whether they are realistic. Dumping raw AI output into the recipe library would weaken trust and add cleanup work when drafts contain bad assumptions or missing details.",
+  "in_scope": [
+    "Add a lightweight review surface for AI recipe drafts in the existing recipe planning flow",
+    "Show title summary meal type servings pantry-used ingredients missing ingredients and instructions for each draft",
+    "Provide refresh dismiss and save-oriented actions without introducing a chat transcript interface"
+  ],
+  "out_of_scope": [
+    "Automatic save on generation",
+    "Multi-turn prompt editing",
+    "Standalone AI dashboard"
+  ],
+  "requirements": [
+    "The review surface must distinguish on-hand ingredients from missing ingredients at a glance",
+    "The review flow must keep the number of required user decisions low on mobile and tablet",
+    "The feature must expose failure and empty-state messaging without collapsing the surrounding recipes UI"
+  ],
+  "acceptance_criteria": [
+    "A user can request AI recipe drafts and review them inside the existing app shell",
+    "Each draft makes pantry fit legible before the user chooses to save it",
+    "The review surface supports retrying generation without page reload hacks"
+  ],
+  "dependencies": [
+    "P1-ai-02 structured recipe draft generation"
+  ],
+  "risks": [
+    "Overly dense draft cards could compromise the lightweight mobile UX that was just improved",
+    "If draft review lacks clear pantry-fit signals the feature will feel like generic AI recipe text"
+  ],
+  "implementation_notes": "Place the primary entry point in the Plan recipes area first. Reuse the existing sheet and panel patterns introduced in the mobile UX pass rather than adding a new interaction model."
+}

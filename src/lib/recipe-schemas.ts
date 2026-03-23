@@ -25,7 +25,11 @@ export const ingredientLineSchema = z.object({
     .string()
     .optional()
     .nullable()
-    .transform((s) => (s && s !== "" ? String(Number(s)) : null)),
+    .transform((s) => {
+      if (s == null) return null;
+      const trimmed = s.trim();
+      return trimmed ? trimmed : null;
+    }),
   unit: z.string().max(50).optional().nullable(),
   optional: z.coerce.boolean().optional().default(false),
 });

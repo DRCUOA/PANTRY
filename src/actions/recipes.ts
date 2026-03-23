@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import { pantryItems, recipeIngredients, recipes } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
+import { normalizeIngredientAmount } from "@/lib/ingredient-amount";
 import { parseMealTypeFromForm, type RecipeMealTypeValue } from "@/lib/recipe-meal-types";
 import {
   type IngredientLineInput,
@@ -78,10 +79,11 @@ async function resolveRecipeIngredients(
       name = i.pantryItemName?.trim() ?? "";
       if (!name) continue;
     }
+    const amount = normalizeIngredientAmount(i.quantity, i.unit);
     rows.push({
       pantryItemName: name,
-      quantity: i.quantity,
-      unit: i.unit || null,
+      quantity: amount.quantity,
+      unit: amount.unit,
       optional: i.optional ?? false,
     });
   }
@@ -100,34 +102,53 @@ async function insertRecipe(
   }
   const db = getDb();
   const v = base;
-  const [r] = await db
-    .insert(recipes)
-    .values({
-      userId,
-      title: v.title,
-      description: v.description || null,
-      instructions: v.instructions || null,
-      servings: v.servings,
-      prepTimeMinutes: v.prepTimeMinutes ?? null,
-      caloriesPerServing: v.caloriesPerServing ?? null,
-      proteinGPerServing: v.proteinGPerServing,
-      mealType,
-    })
-    .returning({ id: recipes.id });
-  if (resolved.rows.length) {
-    await db.insert(recipeIngredients).values(
-      resolved.rows.map((i) => ({
-        recipeId: r.id,
-        pantryItemName: i.pantryItemName,
-        quantity: i.quantity,
-        unit: i.unit || null,
-        optional: i.optional,
-      })),
-    );
+  try {
+    const recipeId = await db.transaction(async (tx) => {
+      const [insertedRecipe] = await tx
+        .insert(recipes)
+        .values({
+          userId,
+          title: v.title,
+          description: v.description || null,
+          instructions: v.instructions || null,
+          servings: v.servings,
+          prepTimeMinutes: v.prepTimeMinutes ?? null,
+          caloriesPerServing: v.caloriesPerServing ?? null,
+          proteinGPerServing: v.proteinGPerServing,
+          mealType,
+        })
+        .returning({ id: recipes.id });
+
+      if (resolved.rows.length) {
+        await tx.insert(recipeIngredients).values(
+          resolved.rows.map((ingredient) => ({
+            recipeId: insertedRecipe.id,
+            pantryItemName: ingredient.pantryItemName,
+            quantity: ingredient.quantity,
+            unit: ingredient.unit || null,
+            optional: ingredient.optional,
+          })),
+        );
+      }
+
+      return insertedRecipe.id;
+    });
+
+    revalidatePath("/plan");
+    revalidatePath("/home");
+    return { ok: true, id: recipeId };
+  } catch {
+    return { ok: false, error: "Could not save recipe" };
   }
-  revalidatePath("/plan");
-  revalidatePath("/home");
-  return { ok: true, id: r.id };
+}
+
+export async function createRecipeFromStructuredInput(
+  base: RecipeBaseInput,
+  ingredients: IngredientLineInput[],
+  mealType: RecipeMealTypeValue,
+): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+  return insertRecipe(userId, base, ingredients, mealType);
 }
 
 /** Create a recipe from validated base + ingredient lines (e.g. file import). */
@@ -136,8 +157,7 @@ export async function createRecipeFromImport(
   ingredients: IngredientLineInput[],
   mealType: RecipeMealTypeValue,
 ): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
-  const userId = await requireUserId();
-  return insertRecipe(userId, base, ingredients, mealType);
+  return createRecipeFromStructuredInput(base, ingredients, mealType);
 }
 
 export async function createRecipe(formData: FormData) {
@@ -215,35 +235,42 @@ export async function updateRecipe(recipeId: number, formData: FormData) {
   if (!own[0]) return { ok: false as const, error: "Not found" };
   const v = base.data;
   const mealType = parseMealTypeFromForm(formData);
-  await db
-    .update(recipes)
-    .set({
-      title: v.title,
-      description: v.description || null,
-      instructions: v.instructions || null,
-      servings: v.servings,
-      prepTimeMinutes: v.prepTimeMinutes ?? null,
-      caloriesPerServing: v.caloriesPerServing ?? null,
-      proteinGPerServing: v.proteinGPerServing,
-      mealType,
-      updatedAt: new Date(),
-    })
-    .where(eq(recipes.id, recipeId));
-  await db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId));
-  if (resolved.rows.length) {
-    await db.insert(recipeIngredients).values(
-      resolved.rows.map((i) => ({
-        recipeId,
-        pantryItemName: i.pantryItemName,
-        quantity: i.quantity,
-        unit: i.unit || null,
-        optional: i.optional,
-      })),
-    );
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(recipes)
+        .set({
+          title: v.title,
+          description: v.description || null,
+          instructions: v.instructions || null,
+          servings: v.servings,
+          prepTimeMinutes: v.prepTimeMinutes ?? null,
+          caloriesPerServing: v.caloriesPerServing ?? null,
+          proteinGPerServing: v.proteinGPerServing,
+          mealType,
+          updatedAt: new Date(),
+        })
+        .where(eq(recipes.id, recipeId));
+      await tx.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId));
+      if (resolved.rows.length) {
+        await tx.insert(recipeIngredients).values(
+          resolved.rows.map((ingredient) => ({
+            recipeId,
+            pantryItemName: ingredient.pantryItemName,
+            quantity: ingredient.quantity,
+            unit: ingredient.unit || null,
+            optional: ingredient.optional,
+          })),
+        );
+      }
+    });
+
+    revalidatePath("/plan");
+    revalidatePath("/home");
+    return { ok: true as const };
+  } catch {
+    return { ok: false as const, error: "Could not update recipe" };
   }
-  revalidatePath("/plan");
-  revalidatePath("/home");
-  return { ok: true as const };
 }
 
 export async function deleteRecipe(recipeId: number): Promise<void> {

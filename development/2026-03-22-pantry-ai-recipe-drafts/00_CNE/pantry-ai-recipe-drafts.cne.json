@@ -1,0 +1,42 @@
+{
+  "title": "[EPIC]: Pantry-Aware AI Recipes — Turn current stock into reviewable meal drafts",
+  "label": "epic",
+  "summary": "Add a lightweight AI assistance layer that turns the user’s current pantry into recipe drafts they can review, save, and plan from. The feature should improve meal discovery without adding chat overhead or weakening trust in the current pantry-first workflow.",
+  "problem_hl": "The app already helps users track stock and rank existing recipes, but it cannot synthesize new meal ideas from the pantry they actually have. That leaves a gap between knowing what is in stock and deciding what to cook, especially when the user has ingredients on hand but no matching recipe in their saved library.",
+  "problem_ll": "3",
+  "goals": [
+    "Generate recipe drafts from the full pantry context without requiring a separate chat workflow",
+    "Keep AI output reviewable and trustworthy by validating structure before it reaches the UI",
+    "Reuse the existing recipe model and persistence flow rather than introducing a parallel AI-only recipe store",
+    "Show clearly which ingredients are already in stock versus still missing",
+    "Fail safely when the AI provider is unavailable or returns unusable output"
+  ],
+  "scope": [
+    "Phase 1: Build pantry context assembly and OpenAI-backed structured draft generation on the server",
+    "Phase 2: Add a draft review experience with explicit save and save-plus-plan actions",
+    "Phase 3: Expose the feature in the main app surfaces and add evaluation and fallback coverage"
+  ],
+  "out_of_scope": [
+    "Chat-style conversational cooking assistant",
+    "Automatic shopping list mutation from AI output",
+    "Automatic pantry deduction or meal-plan insertion without user confirmation",
+    "Nutrition optimization engine redesign",
+    "Model fine-tuning or retrieval infrastructure"
+  ],
+  "acceptance": [
+    "A signed-in user can request pantry-aware recipe drafts from the app using their current pantry and settings as context",
+    "AI responses are validated against a strict structured schema before being rendered or saved",
+    "Each draft shows which ingredients can come from the pantry and which ingredients are still missing",
+    "No AI-generated recipe is persisted until the user explicitly approves it",
+    "An approved AI draft can be saved into the existing recipes and recipe_ingredients tables without schema changes",
+    "Provider failures and malformed model output surface a clear fallback message instead of breaking the plan or recipe flows"
+  ],
+  "child_issues": [
+    "P1-ai-01 pantry prompt context pipeline",
+    "P1-ai-02 structured recipe draft generation",
+    "P2-ai-03 AI recipe draft review surface",
+    "P2-ai-04 approved draft recipe persistence",
+    "P3-ai-05 AI recipe entry points",
+    "P3-ai-06 AI recipe eval coverage"
+  ]
+}

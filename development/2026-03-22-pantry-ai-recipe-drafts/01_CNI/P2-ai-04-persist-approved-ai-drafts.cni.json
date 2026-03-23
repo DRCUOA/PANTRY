@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Persist approved AI drafts",
+  "problem_statement": "AI-generated drafts only become part of the product if approved recipes can flow into the existing recipe library and planning system. A disconnected draft object would force duplicate code paths and make the feature feel temporary rather than integrated.",
+  "in_scope": [
+    "Map approved AI recipe drafts into the existing recipe and ingredient persistence flow",
+    "Support save recipe and save plus add to plan actions using validated draft data",
+    "Ensure pantry ingredient references are stored in a way that remains compatible with current scoring and planning logic"
+  ],
+  "out_of_scope": [
+    "Database schema changes for AI provenance",
+    "Automatic shopping list creation",
+    "Bulk save of multiple drafts at once"
+  ],
+  "requirements": [
+    "Approved drafts must reuse the current recipe creation path or equivalent shared insert logic",
+    "Saved AI recipes must appear in existing recipe lists and plan selection flows without special-case rendering",
+    "Save failures must not leave partial recipe records behind"
+  ],
+  "acceptance_criteria": [
+    "A reviewed AI draft can be saved into recipes and recipe_ingredients without schema changes",
+    "A saved AI draft is visible through the current recipe library and plan flows after refresh or revalidation",
+    "Save plus add to plan creates the recipe and a corresponding meal plan entry only after explicit user action"
+  ],
+  "dependencies": [
+    "P1-ai-02 structured recipe draft generation",
+    "P2-ai-03 AI recipe draft review surface"
+  ],
+  "risks": [
+    "Loose ingredient mapping may reduce the quality of later pantry scoring if AI ingredient names drift too far from pantry naming",
+    "Combining save and plan actions could create duplicate writes if idempotency is not handled carefully"
+  ],
+  "implementation_notes": "Prefer extending shared recipe insert helpers in src/actions/recipes.ts rather than duplicating persistence logic. Keep all AI saves behind explicit confirmation."
+}

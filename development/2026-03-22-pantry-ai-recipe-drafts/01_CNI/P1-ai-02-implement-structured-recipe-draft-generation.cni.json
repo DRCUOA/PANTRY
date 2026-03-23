@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Implement structured recipe draft generation",
+  "problem_statement": "A free-form model response is too brittle for a planning surface that must later render ingredients, instructions, pantry coverage, and save actions. Without a strict generation contract, the feature will fail unpredictably and create extra parsing work in the UI.",
+  "in_scope": [
+    "Add a server-side OpenAI integration that requests recipe drafts from pantry context using the Responses API",
+    "Define a strict response schema for generated recipe drafts including pantry-used ingredients missing ingredients meal type servings and instructions",
+    "Validate returned drafts before exposing them to any client component"
+  ],
+  "out_of_scope": [
+    "Client review UI",
+    "Persisting approved drafts",
+    "Background batching or caching infrastructure"
+  ],
+  "requirements": [
+    "The OpenAI API key must remain server-only",
+    "The generation path must reject malformed or incomplete model output before it reaches the client",
+    "The initial model choice must be configurable with a low-latency default suitable for interactive use"
+  ],
+  "acceptance_criteria": [
+    "A server action or route can return structured AI recipe drafts for the current pantry context",
+    "Drafts include explicit pantry-used and missing ingredient lists instead of only prose descriptions",
+    "Provider errors invalid JSON or schema validation failures return a controlled error result"
+  ],
+  "dependencies": [
+    "P1-ai-01 pantry prompt context pipeline",
+    "OpenAI API credentials for the deployment environment"
+  ],
+  "risks": [
+    "Model quality may drift if the prompt does not strongly constrain pantry usage",
+    "Token usage may rise if the full pantry is sent without trimming low-signal metadata"
+  ],
+  "implementation_notes": "Use the Responses API with structured output rather than a chat UI. Start with a configurable gpt-5-mini default and keep the response schema close to src/lib/recipe-schemas.ts so later persistence remains straightforward."
+}

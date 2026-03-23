@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "cohort": "c26",
+    "repo": "PANTRY"
+  },
+  "summary": "Add AI recipe eval coverage",
+  "problem_statement": "Recipe quality and pantry fit are subjective enough that regressions will slip through if the feature launches without repeatable checks. Without fixture-based evaluation and fallback tests, prompt or model changes could quietly degrade recipe realism and trust.",
+  "in_scope": [
+    "Create pantry fixtures that represent small medium and large household stock states",
+    "Add tests or scripted evaluations for schema validity pantry-fit labeling and failure handling",
+    "Document the expected quality bar and manual review checklist for future prompt or model changes"
+  ],
+  "out_of_scope": [
+    "Automated offline model grading pipeline",
+    "Fine-tuning experiments",
+    "Production analytics warehouse work"
+  ],
+  "requirements": [
+    "Evaluation fixtures must cover pantry-rich pantry-thin and expiring-item scenarios",
+    "The generation path must be testable without live OpenAI calls in routine CI runs",
+    "Fallback behavior must be covered when the provider is unavailable or returns invalid output"
+  ],
+  "acceptance_criteria": [
+    "The repo contains repeatable evaluation coverage for AI recipe generation inputs and outputs",
+    "Malformed responses and provider failures are exercised in tests or scripted checks",
+    "Future model or prompt updates have a documented quality bar to compare against"
+  ],
+  "dependencies": [
+    "P1-ai-02 structured recipe draft generation",
+    "P2-ai-04 approved draft recipe persistence"
+  ],
+  "risks": [
+    "Tests may become too coupled to one prompt wording if fixtures assert exact recipe text",
+    "Without a mockable abstraction the eval path may require live network access and become flaky"
+  ],
+  "implementation_notes": "Favor structure and pantry-fit assertions over exact wording assertions. Add a thin abstraction around the OpenAI call so tests can inject deterministic draft payloads."
+}

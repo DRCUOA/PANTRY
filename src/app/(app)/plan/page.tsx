@@ -9,6 +9,7 @@ import { PlanDayHeaderCell } from "@/components/PlanDayHeaderCell";
 import { PlanMealTile } from "@/components/PlanMealTile";
 import { PlanDayColumn, PlanDndRoot } from "@/components/PlanScheduleDnd";
 import { PlanSwipeContainer } from "@/components/PlanSwipeContainer";
+import { AiRecipeDraftsPanel } from "@/components/AiRecipeDraftsPanel";
 import { RecipeLibrarySection } from "@/components/RecipeLibrarySection";
 import { ShoppingListAddForm } from "@/components/ShoppingListAddForm";
 import { getDb } from "@/db";
@@ -142,6 +143,9 @@ export default async function PlanPage({
               </Link>
             </div>
           </div>
+        </div>
+        <div className="mt-4">
+          <AiRecipeDraftsPanel />
         </div>
         <RecipeLibrarySection recipes={recipes} pantryOptions={pantryPickers} />
       </section>
