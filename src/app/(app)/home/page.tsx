@@ -87,10 +87,21 @@ export default async function HomePage() {
           <p className="mt-3 text-sm text-[var(--muted)]">Add recipes under Plan to get ideas.</p>
         ) : (
           <ul className="mt-3 space-y-2">
-            {data.cookIdeas.map(({ recipe, matched, total }) => (
+            {data.cookIdeas.map(({ recipe, matched, total, variety }) => (
               <li key={recipe.id} className="receipt-card">
-                <span className="font-semibold">{recipe.title}</span>
-                <span className="receipt-card-muted ml-2">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-semibold">{recipe.title}</span>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      variety?.isVarietySafe
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {variety?.label ?? "Not seen in last 28 days"}
+                  </span>
+                </div>
+                <span className="receipt-card-muted">
                   {matched}/{total} ingredients
                 </span>
               </li>
