@@ -13,6 +13,7 @@ import {
   moveMealPlanEntryToDateService,
   updateMealPlanEntryDetailsService,
 } from "@/services/meal-plan.service";
+import { runSundayResetService } from "@/services/reset.service";
 
 async function requireUserId(): Promise<number> {
   const session = await getSession();
@@ -135,4 +136,12 @@ export async function markMealCooked(mealPlanId: number): Promise<void> {
   revalidatePath("/plan");
   revalidatePath("/home");
   revalidatePath("/pantry");
+}
+
+export async function runSundayReset() {
+  const userId = await requireUserId();
+  const summary = await runSundayResetService(userId);
+  revalidatePath("/plan");
+  revalidatePath("/home");
+  return summary;
 }
