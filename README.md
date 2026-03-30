@@ -112,6 +112,21 @@ npm start
 
 Again, `PORT` and `DATABASE_URL` are read from `.env` / `.env.local` when using `npm start`.
 
+
+## Plan gesture smoothness micro-benchmark (dev note)
+
+When touching drag/swipe behavior in the plan UI, run a quick manual benchmark on physical devices/browsers:
+
+1. Open `/plan` in dev mode.
+2. Swipe between weeks repeatedly (10-15 times each direction).
+3. Drag meals across day columns with touch/pointer and with keyboard reordering controls.
+
+Expected smoothness criteria:
+
+- No visible stutter or hitching while dragging overlay and while crossing day columns.
+- Swipe-triggered navigation should feel immediate and consistent (no duplicate or dropped nav).
+- Verified on modern iPhone Safari and an Apple Silicon M3-class Mac in Safari/Chrome.
+
 ## Other scripts
 
 | Command | Description |
