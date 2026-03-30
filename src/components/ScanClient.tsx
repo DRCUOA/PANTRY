@@ -588,7 +588,7 @@ export function ScanClient({
               onClick={() => setShowAdvanced((value) => !value)}
               className="btn-primary-touch border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
             >
-              {showAdvanced ? "Hide details" : "More details"}
+              {showAdvanced ? "Less" : "More"}
             </button>
             {tab === "scan" && (
               <button

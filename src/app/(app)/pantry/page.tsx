@@ -68,25 +68,27 @@ export default async function PantryPage({
         </button>
       </form>
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map(({ key, label }) => {
-          const href = `/pantry?filter=${key}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
-          const active = filter === key;
-          return (
-            <Link
-              key={key}
-              href={href}
-              className={`tap-target rounded-full px-4 text-sm font-semibold ${
-                active
-                  ? "bg-[var(--accent)] text-white"
-                  : "border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--muted)]"
-              }`}
-            >
-              {label}
-            </Link>
-          );
-        })}
-      </div>
+      <details className="panel-bordered">
+        <summary className="tap-target cursor-pointer list-none rounded-lg border border-[var(--border-strong)] bg-[var(--surface-inset)] px-4 text-sm font-semibold text-[var(--foreground)]">
+          More filters
+        </summary>
+        <div className="panel-switcher mt-3 flex-wrap" role="tablist" aria-label="Pantry filters">
+          {FILTERS.map(({ key, label }) => {
+            const href = `/pantry?filter=${key}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+            const active = filter === key;
+            return (
+              <Link
+                key={key}
+                href={href}
+                className={`panel-switcher__tab ${active ? "panel-switcher__tab--active" : ""}`}
+                aria-current={active ? "page" : undefined}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+      </details>
 
       {items.length === 0 ? (
         <p className="text-sm text-[var(--muted)]">No items match. Add something from Scan.</p>
