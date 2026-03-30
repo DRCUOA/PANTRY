@@ -286,75 +286,82 @@ export function PlanMealTile(data: PlanMealTileData) {
 
         {hasRecipe && !editingRecipe && recipeDetail && (
           <div className="mt-4 space-y-4 border-t border-[var(--border)] pt-4">
-            {recipeDetail.description && (
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
-                  Description
-                </h3>
-                <p className="mt-1 text-sm text-[var(--foreground)]">{recipeDetail.description}</p>
-              </div>
-            )}
-            {recipeDetail.instructions && (
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
-                  Instructions
-                </h3>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--foreground)]">
-                  {recipeDetail.instructions}
-                </p>
-              </div>
-            )}
             <p className="text-xs text-[var(--muted)]">
               Meal type: {formatMealTypeLabel(recipeDetail.mealType)}
             </p>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--muted)]">
-              <span>
-                Recipe servings (base):{" "}
-                <strong className="text-[var(--foreground)]">{recipeDetail.servings ?? 1}</strong>
-              </span>
-              {recipeDetail.prepTimeMinutes != null && (
-                <span>
-                  Prep:{" "}
-                  <strong className="text-[var(--foreground)]">{recipeDetail.prepTimeMinutes} min</strong>
-                </span>
-              )}
-              {recipeDetail.caloriesPerServing != null && (
-                <span>
-                  Cal/serving:{" "}
-                  <strong className="text-[var(--foreground)]">{recipeDetail.caloriesPerServing}</strong>
-                </span>
-              )}
-              {recipeDetail.proteinGPerServing != null && recipeDetail.proteinGPerServing !== "" && (
-                <span>
-                  Protein:{" "}
-                  <strong className="text-[var(--foreground)]">{recipeDetail.proteinGPerServing} g</strong>
-                </span>
-              )}
-            </div>
-            {recipeDetail.ingredients.length > 0 && (
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
-                  Ingredients
-                </h3>
-                <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-[var(--foreground)]">
-                  {recipeDetail.ingredients.map((ing, idx) => (
-                    <li key={idx}>
-                      {ing.pantryItemName}
-                      {(ing.quantity != null && ing.quantity !== "") || ing.unit ? (
-                        <span className="text-[var(--muted)]">
-                          {" "}
-                          — {ing.quantity ?? ""}
-                          {ing.unit ? ` ${ing.unit}` : ""}
-                        </span>
-                      ) : null}
-                      {ing.optional && (
-                        <span className="text-xs text-[var(--muted)]"> (optional)</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+            <details>
+              <summary className="tap-target inline-flex cursor-pointer items-center rounded-md border border-[var(--border-strong)] px-3 py-2 text-sm font-semibold text-[var(--foreground)]">
+                More
+              </summary>
+              <div className="mt-3 space-y-4 rounded-lg border border-[var(--border-strong)] bg-[var(--surface-inset)] p-3">
+                {recipeDetail.description && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+                      Description
+                    </h3>
+                    <p className="mt-1 text-sm text-[var(--foreground)]">{recipeDetail.description}</p>
+                  </div>
+                )}
+                {recipeDetail.instructions && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+                      Instructions
+                    </h3>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--foreground)]">
+                      {recipeDetail.instructions}
+                    </p>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--muted)]">
+                  <span>
+                    Recipe servings (base):{" "}
+                    <strong className="text-[var(--foreground)]">{recipeDetail.servings ?? 1}</strong>
+                  </span>
+                  {recipeDetail.prepTimeMinutes != null && (
+                    <span>
+                      Prep:{" "}
+                      <strong className="text-[var(--foreground)]">{recipeDetail.prepTimeMinutes} min</strong>
+                    </span>
+                  )}
+                  {recipeDetail.caloriesPerServing != null && (
+                    <span>
+                      Cal/serving:{" "}
+                      <strong className="text-[var(--foreground)]">{recipeDetail.caloriesPerServing}</strong>
+                    </span>
+                  )}
+                  {recipeDetail.proteinGPerServing != null && recipeDetail.proteinGPerServing !== "" && (
+                    <span>
+                      Protein:{" "}
+                      <strong className="text-[var(--foreground)]">{recipeDetail.proteinGPerServing} g</strong>
+                    </span>
+                  )}
+                </div>
+                {recipeDetail.ingredients.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+                      Ingredients
+                    </h3>
+                    <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-[var(--foreground)]">
+                      {recipeDetail.ingredients.map((ing, idx) => (
+                        <li key={idx}>
+                          {ing.pantryItemName}
+                          {(ing.quantity != null && ing.quantity !== "") || ing.unit ? (
+                            <span className="text-[var(--muted)]">
+                              {" "}
+                              — {ing.quantity ?? ""}
+                              {ing.unit ? ` ${ing.unit}` : ""}
+                            </span>
+                          ) : null}
+                          {ing.optional && (
+                            <span className="text-xs text-[var(--muted)]"> (optional)</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-            )}
+            </details>
             <button
               type="button"
               disabled={pending !== null}

@@ -301,7 +301,7 @@ export default async function PlanPage({
             Keep the week focused: schedule first, then recipes and shopping when you need them.
           </p>
         </div>
-        <div className="panel-switcher md:hidden" role="tablist" aria-label="Plan sections">
+        <div className="panel-switcher" role="tablist" aria-label="Plan sections">
           {PLAN_PANELS.map((panel) => {
             const active = activePanel === panel.id;
             return (
@@ -323,7 +323,7 @@ export default async function PlanPage({
           <PlanSwipeContainer prevHref={prevHref} nextHref={nextHref}>
             <div className="plan-outer-frame">
               <div className="plan-week-nav">
-                <Link href={prevHref} className="min-w-14 shrink-0">
+                <Link href={prevHref} className="min-h-11 min-w-14 shrink-0">
                   ← Prev
                 </Link>
                 <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center">
@@ -341,7 +341,7 @@ export default async function PlanPage({
                     {end}
                   </span>
                 </div>
-                <Link href={nextHref} className="min-w-14 shrink-0">
+                <Link href={nextHref} className="min-h-11 min-w-14 shrink-0">
                   Next →
                 </Link>
               </div>
@@ -513,14 +513,9 @@ export default async function PlanPage({
         </div>
       </div>
 
-      <div className="md:hidden">
+      <div>
         {activePanel === "recipes" && renderRecipesPanel()}
         {activePanel === "shopping" && renderShoppingPanel()}
-      </div>
-
-      <div className="hidden md:grid md:grid-cols-2 md:gap-6">
-        {renderRecipesPanel()}
-        {renderShoppingPanel()}
       </div>
     </div>
   );
