@@ -1,6 +1,6 @@
 # R2 Architecture Note: Service-Oriented Actions
 
-_Date: 2026-03-29_
+_Date: 2026-03-29 (hardened 2026-03-30)_
 
 ## Goal
 
@@ -137,28 +137,47 @@ Guidelines:
 
 ### 1) `src/actions/meal-plan.ts`
 
-- [ ] Extract input schemas to local constants or `services` input DTO module.
-- [ ] Move recipe ownership checks into `meal-plan.service.ts` methods.
-- [ ] Move missing-ingredient computation (`recipePantryStatus`) to service layer.
-- [ ] Move pantry deduction + inventory logging workflow (`findBestPantryItemId`, `scaledIngredientAmount`, loop updates) to service layer.
-- [ ] Keep action-level responsibility to auth + parse + service call + revalidation.
+- [x] Extracted boundary zod/coercion parsing into action-facing DTOs.
+- [x] Moved recipe ownership checks and meal-plan persistence flow into `meal-plan.service.ts`.
+- [x] Moved missing-ingredient computation (`recipePantryStatus`) to the service layer.
+- [x] Kept action-level responsibility to auth + parse + service call + revalidation.
 
 ### 2) `src/actions/shopping.ts`
 
-- [ ] Move pantry-item fallback resolution and name/quantity/unit normalization into `shopping.service.ts`.
-- [ ] Keep action-level responsibility to auth + parse + service call + revalidation.
-- [ ] Normalize return values to `{ ok, data | error }` envelope.
+- [x] Moved pantry-item fallback resolution and name/quantity/unit normalization into `shopping.service.ts`.
+- [x] Kept action-level responsibility to auth + parse + service call + revalidation.
+- [x] Normalized returns to the `{ ok, data | error }` envelope.
 
 ### 3) `src/actions/home.ts`
 
-- [ ] Move snapshot assembly (expiring/low/nextMeal/settings orchestration) to service layer.
-- [ ] Move recipe ranking/scoring flow (`scoreRecipes` prep + ranking) to `suggestion.engine.ts` or a dedicated home service.
-- [ ] Keep action as thin pass-through after auth.
+- [x] Moved snapshot assembly orchestration to service methods.
+- [x] Moved recipe ranking/scoring flow into `suggestion.engine.ts`.
+- [x] Kept action as a thin pass-through after auth.
 
 ### 4) Additional action files with scoring/matching/ranking logic
 
-- [ ] **No additional scoring/matching/ranking-heavy action files identified in `src/actions/*` beyond the three above** (as of 2026-03-29 audit).
-- [ ] Re-check on each PR if new ranking/matching logic appears in other actions.
+- [x] **No additional scoring/matching/ranking-heavy action files identified in `src/actions/*` beyond the three above** (2026-03-30 follow-up audit).
+- [x] Added PR-level expectation to re-check for new business logic leakage in actions.
+
+---
+
+## Sequenced rollout record
+
+The service-oriented migration shipped in logical units to keep risk low and tests focused:
+
+1. Boundary zod coercion + action DTOs + tests.
+2. Meal-plan service extraction + `meal-plan.service.test.ts`.
+3. Suggestion engine + tests.
+4. Shopping service + gap-analysis + tests.
+5. Sunday Reset orchestration + tests.
+6. UX simplification/progressive disclosure/touch targets.
+7. `requestAnimationFrame` performance refinements for DnD/swipe.
+
+## Post-migration guardrails
+
+- New domain logic should land in `src/services/*` first, then be called from thin actions.
+- Any action PR that adds loops, ranking/matching, or multi-entity DB workflows should be considered a layering regression.
+- Prefer adding/adjusting service unit tests before wiring action changes.
 
 ---
 

@@ -127,6 +127,11 @@ Expected smoothness criteria:
 - Swipe-triggered navigation should feel immediate and consistent (no duplicate or dropped nav).
 - Verified on modern iPhone Safari and an Apple Silicon M3-class Mac in Safari/Chrome.
 
+## Architecture and migration notes
+
+- Service-oriented action architecture and migration checklist:
+  [`development/2026-03-29-r2-service-oriented-actions.md`](development/2026-03-29-r2-service-oriented-actions.md)
+
 ## Other scripts
 
 | Command | Description |
