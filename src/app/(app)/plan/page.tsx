@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull, lt } from "drizzle-orm";
 import { listRecipes } from "@/actions/recipes";
 import { addMealPlanEntry, listMealPlanRange } from "@/actions/meal-plan";
 import { listPantryItemsForPickers } from "@/actions/pantry";
@@ -12,11 +12,12 @@ import { PlanSwipeContainer } from "@/components/PlanSwipeContainer";
 import { RecipeLibrarySection } from "@/components/RecipeLibrarySection";
 import { ShoppingListAddForm } from "@/components/ShoppingListAddForm";
 import { getDb } from "@/db";
-import { pantryItems } from "@/db/schema";
+import { mealPlanEntries, pantryItems } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 import { toPlanRecipeDetail, type PlanRecipeDetail } from "@/lib/plan-recipe";
 import { recipePantryStatus } from "@/lib/recipe-score";
 import { addDaysIso, weekRangeMondayOffset } from "@/lib/week";
+import { rankSundayBestMatches } from "@/services/suggestion.engine";
 
 const MEALS = ["breakfast", "lunch", "dinner"] as const;
 const PLAN_PANELS = [
@@ -48,6 +49,13 @@ function buildPlanHref(weekOffset: number, panel: PlanPanel) {
   return query ? `/plan?${query}` : "/plan";
 }
 
+function daysBetweenIso(fromIso: string, toIso: string): number {
+  const from = new Date(`${fromIso}T12:00:00Z`);
+  const to = new Date(`${toIso}T12:00:00Z`);
+  const MS_PER_DAY = 86400000;
+  return Math.floor((to.getTime() - from.getTime()) / MS_PER_DAY);
+}
+
 export default async function PlanPage({
   searchParams,
 }: {
@@ -66,7 +74,12 @@ export default async function PlanPage({
   const userId = session.userId!;
   const db = getDb();
   const pantryRows = await db
-    .select({ name: pantryItems.name, expirationDate: pantryItems.expirationDate })
+    .select({
+      name: pantryItems.name,
+      expirationDate: pantryItems.expirationDate,
+      quantity: pantryItems.quantity,
+      lowStockThreshold: pantryItems.lowStockThreshold,
+    })
     .from(pantryItems)
     .where(eq(pantryItems.userId, userId));
 
@@ -99,6 +112,56 @@ export default async function PlanPage({
   const prevHref = buildPlanHref(weekOffset - 1, activePanel);
   const nextHref = buildPlanHref(weekOffset + 1, activePanel);
   const thisWeekHref = buildPlanHref(0, activePanel);
+  const sundayDate =
+    days.find((date) => new Date(`${date}T12:00:00Z`).getUTCDay() === 0) ?? days[days.length - 1]!;
+
+  const pastRecipeEntries = await db
+    .select({
+      recipeId: mealPlanEntries.recipeId,
+      plannedDate: mealPlanEntries.plannedDate,
+    })
+    .from(mealPlanEntries)
+    .where(
+      and(
+        eq(mealPlanEntries.userId, userId),
+        isNotNull(mealPlanEntries.recipeId),
+        lt(mealPlanEntries.plannedDate, sundayDate),
+      ),
+    );
+
+  const lastSeenByRecipe = new Map<number, string>();
+  for (const row of pastRecipeEntries) {
+    if (row.recipeId == null) continue;
+    const current = lastSeenByRecipe.get(row.recipeId);
+    if (!current || row.plannedDate > current) {
+      lastSeenByRecipe.set(row.recipeId, row.plannedDate);
+    }
+  }
+  const varietyMetadata = Array.from(lastSeenByRecipe.entries()).map(([recipeId, lastDate]) => ({
+    recipeId,
+    daysSinceLastHad: daysBetweenIso(lastDate, sundayDate),
+  }));
+
+  const sundayTopSuggestions = rankSundayBestMatches({
+    userId,
+    slotContext: { slotDate: sundayDate, mealType: "dinner" },
+    pantry: pantryRows.map((row) => ({
+      name: row.name,
+      expirationDate: row.expirationDate,
+      quantity: row.quantity != null ? Number(row.quantity) : undefined,
+      lowStockThreshold: row.lowStockThreshold != null ? Number(row.lowStockThreshold) : null,
+    })),
+    recipes: recipes.map((recipe) => ({
+      id: recipe.id,
+      title: recipe.title,
+      mealType: recipe.mealType,
+      ingredients: recipe.ingredients.map((ingredient) => ({
+        pantryItemName: ingredient.pantryItemName,
+        optional: ingredient.optional,
+      })),
+    })),
+    varietyMetadata,
+  });
 
   function renderRecipesPanel() {
     return (
@@ -143,7 +206,39 @@ export default async function PlanPage({
             </div>
           </div>
         </div>
-        <RecipeLibrarySection recipes={recipes} pantryOptions={pantryPickers} />
+        {sundayTopSuggestions.length > 0 && (
+          <div className="mt-4 space-y-3 border-b border-[var(--border-strong)] pb-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-base font-semibold">Sunday best matches</h3>
+              <span className="text-xs text-[var(--muted)]">{sundayDate}</span>
+            </div>
+            <ul className="space-y-2">
+              {sundayTopSuggestions.map((suggestion) => (
+                <li key={suggestion.id} className="receipt-card">
+                  <p className="font-semibold">{suggestion.title}</p>
+                  {suggestion.explainabilityTags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {suggestion.explainabilityTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full border border-[var(--border-strong)] bg-[var(--surface-inset)] px-2 py-0.5 text-xs text-[var(--muted)]"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <details className="mt-4">
+          <summary className="tap-target inline-flex cursor-pointer items-center rounded-md border border-[var(--border-strong)] px-3 py-2 text-sm font-semibold text-[var(--foreground)]">
+            More recipes
+          </summary>
+          <RecipeLibrarySection recipes={recipes} pantryOptions={pantryPickers} />
+        </details>
       </section>
     );
   }
