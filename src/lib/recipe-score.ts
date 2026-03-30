@@ -1,4 +1,5 @@
 import { normalizePantryName } from "./pantry-match";
+import type { VarietyRuleResult } from "@/services/meal-plan.service";
 
 export type RecipeForScore = {
   id: number;
@@ -22,7 +23,13 @@ export function scoreRecipes(
   recipes: RecipeForScore[],
   pantry: PantryForScore[],
   expiringWithinDays = 7,
-): { recipe: RecipeForScore; score: number; matched: number; total: number }[] {
+): {
+  recipe: RecipeForScore;
+  score: number;
+  matched: number;
+  total: number;
+  variety?: VarietyRuleResult & { daysSinceLastHad: number | null };
+}[] {
   const pantryNorm = new Map<string, PantryForScore>();
   for (const p of pantry) {
     pantryNorm.set(normalizePantryName(p.name), p);

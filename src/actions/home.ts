@@ -12,6 +12,7 @@ import {
 } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 import { scoreRecipes } from "@/lib/recipe-score";
+import { listRecipeRecencyByUser } from "@/services/meal-plan.service";
 
 async function requireUserId(): Promise<number> {
   const session = await getSession();
@@ -80,6 +81,20 @@ export async function getHomeSnapshot() {
     ingredients: ingredientsByRecipe.get(r.id) ?? [],
   }));
   const ranked = scoreRecipes(forScore, pantryForScore, 7).slice(0, 6);
+  const recency = await listRecipeRecencyByUser(userId);
+  const recencyByRecipeId = new Map(recency.map((item) => [item.recipeId, item]));
+  const rankedWithVariety = ranked.map((item) => {
+    const meta = recencyByRecipeId.get(item.recipe.id);
+    return {
+      ...item,
+      variety: meta
+        ? {
+            ...meta.variety,
+            daysSinceLastHad: meta.daysSinceLastHad,
+          }
+        : undefined,
+    };
+  });
 
   const nextMeals = await db
     .select()
@@ -119,7 +134,7 @@ export async function getHomeSnapshot() {
   return {
     expiring,
     low,
-    cookIdeas: ranked,
+    cookIdeas: rankedWithVariety,
     nextMeal,
     settings: settingsRow[0] ?? null,
   };
