@@ -44,21 +44,14 @@ async function createMealPlanEntry(userId: number, payload: AddMealPlanEntryDto)
   return { ok: true };
 }
 
-export async function addMealPlanEntry(formData: FormData): Promise<ActionResult> {
+export async function addMealPlanEntry(formData: FormData): Promise<void> {
   const userId = await requireUserId();
   const parsed = parseMealPlanFormData(formData);
   if (!parsed.success) {
-    return {
-      ok: false,
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Invalid meal plan payload",
-        fieldErrors: parsed.error.flatten().fieldErrors,
-      },
-    };
+    return;
   }
 
-  return createMealPlanEntry(userId, parsed.data);
+  await createMealPlanEntry(userId, parsed.data);
 }
 
 export async function deleteMealPlanEntry(id: number): Promise<void> {
@@ -140,8 +133,7 @@ export async function markMealCooked(mealPlanId: number): Promise<void> {
 
 export async function runSundayReset() {
   const userId = await requireUserId();
-  const summary = await runSundayResetService(userId);
+  await runSundayResetService(userId);
   revalidatePath("/plan");
   revalidatePath("/home");
-  return summary;
 }

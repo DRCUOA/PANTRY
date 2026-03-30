@@ -77,7 +77,7 @@ export async function runSundayResetService(
       ? []
       : await db.select().from(recipeIngredients).where(inArray(recipeIngredients.recipeId, recipeIds));
 
-  const ingredientsByRecipe = new Map<number, (typeof ingredientRows)[]>();
+  const ingredientsByRecipe = new Map<number, (typeof ingredientRows)[number][]>();
   for (const ingredient of ingredientRows) {
     const bucket = ingredientsByRecipe.get(ingredient.recipeId) ?? [];
     bucket.push(ingredient);

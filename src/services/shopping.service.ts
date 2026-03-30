@@ -96,7 +96,7 @@ export async function generateFromMealPlanRange(userId: number, startDate: strin
   ]);
 
   const recipesById = new Map(recipeRows.map((row) => [row.id, row]));
-  const ingredientsByRecipeId = new Map<number, (typeof ingredientRows)[]>();
+  const ingredientsByRecipeId = new Map<number, (typeof ingredientRows)[number][]>();
   for (const ingredient of ingredientRows) {
     const bucket = ingredientsByRecipeId.get(ingredient.recipeId) ?? [];
     bucket.push(ingredient);
