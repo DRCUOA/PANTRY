@@ -1,11 +1,12 @@
 "use server";
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import { pantryItems, shoppingListItems } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 import { parseShoppingFormData, type AddShoppingItemDto } from "@/actions/payload-schemas";
+import { listShoppingItemsReadModel } from "@/services/shopping.service";
 
 async function requireUserId(): Promise<number> {
   const session = await getSession();
@@ -62,12 +63,7 @@ async function createShoppingItem(userId: number, payload: AddShoppingItemDto): 
 
 export async function listShoppingItems() {
   const userId = await requireUserId();
-  const db = getDb();
-  return db
-    .select()
-    .from(shoppingListItems)
-    .where(eq(shoppingListItems.userId, userId))
-    .orderBy(asc(shoppingListItems.status), asc(shoppingListItems.name));
+  return listShoppingItemsReadModel(userId);
 }
 
 export async function addShoppingItem(formData: FormData): Promise<ActionResult> {
