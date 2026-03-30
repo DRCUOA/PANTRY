@@ -1,5 +1,38 @@
-import { describe, expect, it } from "vitest";
-import { buildRecipeRecency, computeVarietyRule } from "@/services/meal-plan.service";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  addMissingToShoppingListService,
+  buildRecipeRecency,
+  computeVarietyRule,
+  createMealPlanEntryService,
+  duplicateMealPlanEntryToDateService,
+  markMealCookedService,
+  moveMealPlanEntryToDateService,
+} from "@/services/meal-plan.service";
+
+const {
+  getDbMock,
+  findBestPantryItemIdMock,
+  scaledIngredientAmountMock,
+  recipePantryStatusMock,
+} = vi.hoisted(() => ({
+  getDbMock: vi.fn(),
+  findBestPantryItemIdMock: vi.fn(),
+  scaledIngredientAmountMock: vi.fn(),
+  recipePantryStatusMock: vi.fn(),
+}));
+
+vi.mock("@/db", () => ({
+  getDb: getDbMock,
+}));
+
+vi.mock("@/lib/pantry-match", () => ({
+  findBestPantryItemId: findBestPantryItemIdMock,
+  scaledIngredientAmount: scaledIngredientAmountMock,
+}));
+
+vi.mock("@/lib/recipe-score", () => ({
+  recipePantryStatus: recipePantryStatusMock,
+}));
 
 describe("meal plan recipe recency", () => {
   const now = new Date("2026-03-30T00:00:00.000Z");
@@ -48,40 +81,8 @@ describe("meal plan recipe recency", () => {
       isVarietySafe: true,
       label: "Not seen in last 28 days",
     });
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const {
-  getDbMock,
-  findBestPantryItemIdMock,
-  scaledIngredientAmountMock,
-  recipePantryStatusMock,
-} = vi.hoisted(() => ({
-  getDbMock: vi.fn(),
-  findBestPantryItemIdMock: vi.fn(),
-  scaledIngredientAmountMock: vi.fn(),
-  recipePantryStatusMock: vi.fn(),
-}));
-
-vi.mock("@/db", () => ({
-  getDb: getDbMock,
-}));
-
-vi.mock("@/lib/pantry-match", () => ({
-  findBestPantryItemId: findBestPantryItemIdMock,
-  scaledIngredientAmount: scaledIngredientAmountMock,
-}));
-
-vi.mock("@/lib/recipe-score", () => ({
-  recipePantryStatus: recipePantryStatusMock,
-}));
-
-import {
-  addMissingToShoppingListService,
-  createMealPlanEntryService,
-  duplicateMealPlanEntryToDateService,
-  markMealCookedService,
-  moveMealPlanEntryToDateService,
-} from "@/services/meal-plan.service";
+  });
+});
 
 function createDbMock(selectQueue: unknown[]) {
   const insertValues = vi.fn(async (_payload: unknown) => undefined);

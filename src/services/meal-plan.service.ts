@@ -1,21 +1,19 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm";
 import { getDb } from "@/db";
-import { mealPlanEntries, recipes } from "@/db/schema";
-import type { ServiceResult } from "@/services/_shared/result";
+import {
+  inventoryLog,
+  mealPlanEntries,
+  pantryItems,
+  recipeIngredients,
+  recipes,
+  shoppingListItems,
+} from "@/db/schema";
+import type { AddMealPlanEntryDto } from "@/actions/payload-schemas";
+import { findBestPantryItemId, scaledIngredientAmount } from "@/lib/pantry-match";
+import { recipePantryStatus } from "@/lib/recipe-score";
 
 const MS_PER_DAY = 86_400_000;
 export const VARIETY_LOOKBACK_DAYS = 28;
-
-export interface AddMealPlanEntryInput {
-  userId: number;
-  input: {
-    plannedDate: string;
-    mealType: "breakfast" | "lunch" | "dinner";
-    recipeId: number | null;
-    servings: number;
-    notes: string | null;
-  };
-}
 
 export interface RecipeRecency {
   recipeId: number;
@@ -28,6 +26,12 @@ export interface VarietyRuleResult {
   isVarietySafe: boolean;
   label: string;
 }
+
+export type MealPlanActionResult = { ok: true } | { ok: false; error: string };
+
+export type AddMealPlanEntryResult =
+  | { ok: true }
+  | { ok: false; error: { code: "NOT_FOUND"; message: "Recipe not found" } };
 
 function isoDayDiff(fromIso: string, toDate: Date) {
   const from = new Date(`${fromIso}T12:00:00.000Z`);
@@ -106,30 +110,6 @@ export async function listRecipeRecencyByUser(
     now,
   );
 }
-
-export async function addMealPlanEntryService(
-  _params: AddMealPlanEntryInput,
-): Promise<ServiceResult<{ mealPlanEntryId: number }>> {
-  return { ok: false, error: "Not implemented" };
-import { and, asc, eq, gte, lte } from "drizzle-orm";
-import { getDb } from "@/db";
-import {
-  inventoryLog,
-  mealPlanEntries,
-  pantryItems,
-  recipeIngredients,
-  recipes,
-  shoppingListItems,
-} from "@/db/schema";
-import { findBestPantryItemId, scaledIngredientAmount } from "@/lib/pantry-match";
-import { recipePantryStatus } from "@/lib/recipe-score";
-import type { AddMealPlanEntryDto } from "@/actions/payload-schemas";
-
-export type MealPlanActionResult = { ok: true } | { ok: false; error: string };
-
-export type AddMealPlanEntryResult =
-  | { ok: true }
-  | { ok: false; error: { code: "NOT_FOUND"; message: "Recipe not found" } };
 
 export async function listMealPlanRangeService(userId: number, startDate: string, endDate: string) {
   const db = getDb();
