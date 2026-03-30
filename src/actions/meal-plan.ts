@@ -2,12 +2,12 @@
 
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { getDb } from "@/db";
 import { inventoryLog, mealPlanEntries, pantryItems, recipeIngredients, recipes, shoppingListItems } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 import { findBestPantryItemId, scaledIngredientAmount } from "@/lib/pantry-match";
 import { recipePantryStatus } from "@/lib/recipe-score";
+import { isoDateSchema, parseMealPlanFormData, type AddMealPlanEntryDto } from "@/actions/payload-schemas";
 
 async function requireUserId(): Promise<number> {
   const session = await getSession();
@@ -32,50 +32,60 @@ export async function listMealPlanRange(startDate: string, endDate: string) {
   return rows;
 }
 
-export async function addMealPlanEntry(formData: FormData): Promise<void> {
-  const userId = await requireUserId();
-  const ridRaw = formData.get("recipeId");
-  let recipeId: number | null = null;
-  if (typeof ridRaw === "string" && ridRaw !== "" && ridRaw !== "none") {
-    const n = Number(ridRaw);
-    if (Number.isFinite(n)) recipeId = n;
-  }
-  const schema = z.object({
-    plannedDate: z.string().min(8),
-    mealType: z.enum(["breakfast", "lunch", "dinner"]),
-    servings: z.coerce.number().positive().default(1),
-    notes: z.string().optional().nullable(),
-  });
-  const parsed = schema.safeParse({
-    plannedDate: formData.get("plannedDate"),
-    mealType: formData.get("mealType"),
-    servings: formData.get("servings") || 1,
-    notes: formData.get("notes"),
-  });
-  if (!parsed.success) {
-    return;
-  }
-  const v = parsed.data;
+
+
+type ActionError = {
+  code: "VALIDATION_ERROR" | "NOT_FOUND";
+  message: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+};
+
+type ActionResult = { ok: true } | { ok: false; error: ActionError };
+
+async function createMealPlanEntry(userId: number, payload: AddMealPlanEntryDto): Promise<ActionResult> {
   const db = getDb();
-  if (recipeId != null) {
+  if (payload.recipeId != null) {
     const r = await db
       .select()
       .from(recipes)
-      .where(and(eq(recipes.id, recipeId), eq(recipes.userId, userId)))
+      .where(and(eq(recipes.id, payload.recipeId), eq(recipes.userId, userId)))
       .limit(1);
-    if (!r[0]) return;
+    if (!r[0]) {
+      return {
+        ok: false,
+        error: { code: "NOT_FOUND", message: "Recipe not found" },
+      };
+    }
   }
   await db.insert(mealPlanEntries).values({
     userId,
-    plannedDate: v.plannedDate,
-    mealType: v.mealType,
-    recipeId,
-    servings: String(v.servings),
+    plannedDate: payload.plannedDate,
+    mealType: payload.mealType,
+    recipeId: payload.recipeId,
+    servings: String(payload.servings),
     status: "planned",
-    notes: v.notes || null,
+    notes: payload.notes,
   });
   revalidatePath("/plan");
   revalidatePath("/home");
+  return { ok: true };
+}
+
+export async function addMealPlanEntry(formData: FormData): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const parsed = parseMealPlanFormData(formData);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid meal plan payload",
+        fieldErrors: parsed.error.flatten().fieldErrors,
+      },
+    };
+  }
+
+  return createMealPlanEntry(userId, parsed.data);
 }
 
 export async function deleteMealPlanEntry(id: number): Promise<void> {
@@ -116,8 +126,6 @@ export async function updateMealPlanEntryDetails(
   revalidatePath("/home");
   return { ok: true };
 }
-
-const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 /** Change which calendar day this meal is on (same slot fields otherwise). */
 export async function moveMealPlanEntryToDate(

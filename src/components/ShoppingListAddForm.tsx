@@ -11,11 +11,11 @@ export function ShoppingListAddForm({ pantryOptions }: { pantryOptions: PantryPi
   const [unit, setUnit] = useState("");
   const [pending, setPending] = useState(false);
 
-  const fromPantry = pickId !== "" && pickId !== "custom";
+  const fromPantry = pickId !== "" && pickId !== "none" && pickId !== "custom";
 
   function applyPantrySelection(idStr: string) {
     setPickId(idStr);
-    if (idStr && idStr !== "custom") {
+    if (idStr && idStr !== "none" && idStr !== "custom") {
       const p = pantryOptions.find((x) => String(x.id) === idStr);
       if (p) {
         setName(p.name);
@@ -58,7 +58,7 @@ export function ShoppingListAddForm({ pantryOptions }: { pantryOptions: PantryPi
           className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
           aria-label="Choose pantry item or custom"
         >
-          <option value="">Select from pantry…</option>
+          <option value="none">Select from pantry…</option>
           {pantryOptions.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name} ({p.quantity} {p.unit})
@@ -67,7 +67,7 @@ export function ShoppingListAddForm({ pantryOptions }: { pantryOptions: PantryPi
           <option value="custom">Custom (type name)…</option>
         </select>
       </div>
-      {(pickId === "custom" || pickId === "") && (
+      {(pickId === "custom" || pickId === "" || pickId === "none") && (
         <input
           name="name"
           value={name}
@@ -77,15 +77,18 @@ export function ShoppingListAddForm({ pantryOptions }: { pantryOptions: PantryPi
           className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted)]"
         />
       )}
-      {pickId !== "" && pickId !== "custom" && <input type="hidden" name="name" value={name} readOnly />}
+      {pickId !== "" && pickId !== "none" && pickId !== "custom" && <input type="hidden" name="name" value={name} readOnly />}
       <input
         type="hidden"
         name="pantryItemId"
-        value={pickId && pickId !== "custom" ? pickId : ""}
+        value={pickId && pickId !== "none" && pickId !== "custom" ? pickId : ""}
       />
       <div className="flex flex-wrap gap-2">
         <input
           name="quantity"
+          type="number"
+          step="any"
+          min={0.000001}
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           placeholder="Qty"
