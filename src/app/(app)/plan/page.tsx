@@ -266,11 +266,16 @@ export default async function PlanPage({
                       item.status === "bought" ? "text-[var(--muted)] line-through" : ""
                     }`}
                   >
-                    {item.name}
-                    {item.quantity != null && (
-                      <span className="receipt-card-muted ml-2">
-                        {item.quantity} {item.unit ?? ""}
-                      </span>
+                    <span className="block">
+                      {item.name}
+                      {item.quantity != null && (
+                        <span className="receipt-card-muted ml-2 inline">
+                          {item.quantity} {item.unit ?? ""}
+                        </span>
+                      )}
+                    </span>
+                    {item.sourceRecipeTitle && (
+                      <span className="receipt-card-muted mt-1 block text-xs">Source: {item.sourceRecipeTitle}</span>
                     )}
                   </button>
                 </form>
