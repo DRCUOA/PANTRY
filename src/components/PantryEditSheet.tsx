@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deletePantryItem, markPantryItemUsedUp, updatePantryItem } from "@/actions/pantry";
 import { MobileSheet } from "@/components/MobileSheet";
+import { StockStateBadge } from "@/components/StockStateBadge";
+import { getPantryStockState } from "@/services/_shared/stock-state";
 
 export type PantryItemDTO = {
   id: number;
@@ -32,10 +34,7 @@ export function PantryEditSheet({
   const [error, setError] = useState<string | null>(null);
   const [showMore, setShowMore] = useState(false);
 
-  const isLow =
-    item.lowStockThreshold != null &&
-    Number.isFinite(Number(item.lowStockThreshold)) &&
-    Number(item.quantity) <= Number(item.lowStockThreshold);
+  const stockState = getPantryStockState(item.quantity, item.lowStockThreshold);
 
   function close() {
     setOpen(false);
@@ -77,11 +76,7 @@ export function PantryEditSheet({
           </span>
         </div>
         <div className="mt-1 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
-          {isLow && (
-            <span className="rounded-full bg-[var(--warn-bg)] px-2 py-0.5 font-semibold text-[var(--warn)]">
-              Low
-            </span>
-          )}
+          <StockStateBadge state={stockState} />
           {item.location && <span>{item.location}</span>}
           {item.expirationDate && (
             <span className="text-[var(--warn)]">Exp {item.expirationDate}</span>
