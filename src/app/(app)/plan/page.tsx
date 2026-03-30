@@ -11,6 +11,7 @@ import { PlanDayColumn, PlanDndRoot } from "@/components/PlanScheduleDnd";
 import { PlanSwipeContainer } from "@/components/PlanSwipeContainer";
 import { RecipeLibrarySection } from "@/components/RecipeLibrarySection";
 import { ShoppingListAddForm } from "@/components/ShoppingListAddForm";
+import { StockStateBadge } from "@/components/StockStateBadge";
 import { getDb } from "@/db";
 import { mealPlanEntries, pantryItems } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
@@ -18,6 +19,7 @@ import { toPlanRecipeDetail, type PlanRecipeDetail } from "@/lib/plan-recipe";
 import { recipePantryStatus } from "@/lib/recipe-score";
 import { addDaysIso, weekRangeMondayOffset } from "@/lib/week";
 import { rankSundayBestMatches } from "@/services/suggestion.engine";
+import { getShoppingStockState } from "@/services/_shared/stock-state";
 
 const MEALS = ["breakfast", "lunch", "dinner"] as const;
 const PLAN_PANELS = [
@@ -267,7 +269,10 @@ export default async function PlanPage({
                     }`}
                   >
                     <span className="block">
-                      {item.name}
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span>{item.name}</span>
+                        <StockStateBadge state={getShoppingStockState(item.status)} />
+                      </span>
                       {item.quantity != null && (
                         <span className="receipt-card-muted ml-2 inline">
                           {item.quantity} {item.unit ?? ""}
