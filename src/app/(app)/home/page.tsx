@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getHomeSnapshot } from "@/actions/home";
-import { runSundayReset } from "@/actions/meal-plan";
+import { SundayResetButton } from "@/components/SundayResetButton";
 import { InstructionIcon } from "@/components/InstructionIcon";
 
 const HOME_PANELS = [
@@ -158,14 +158,9 @@ export default async function HomePage({
           <div className="border-b border-[var(--border-strong)] pb-3">
             <h2 className="font-serif text-lg font-semibold">Next planned meal</h2>
             <p className="mt-1 text-sm text-[var(--muted)]">Refresh the next week with pantry-aware meal picks.</p>
-            <form action={runSundayReset} className="mt-3">
-              <button
-                type="submit"
-                className="btn-primary-touch w-full bg-[var(--accent)] font-semibold text-white shadow-[0_0_24px_var(--accent-glow)] active:opacity-90"
-              >
-                Run Sunday Reset
-              </button>
-            </form>
+            <div className="mt-3">
+              <SundayResetButton />
+            </div>
           </div>
           {!data.nextMeal ? (
             <p className="mt-3 text-sm text-[var(--muted)]">Nothing planned yet. Open Plan to add meals.</p>

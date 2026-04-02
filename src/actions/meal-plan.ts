@@ -131,9 +131,22 @@ export async function markMealCooked(mealPlanId: number): Promise<void> {
   revalidatePath("/pantry");
 }
 
-export async function runSundayReset() {
-  const userId = await requireUserId();
-  await runSundayResetService(userId);
-  revalidatePath("/plan");
-  revalidatePath("/home");
+export type SundayResetActionResult = { ok: true; message: string } | { ok: false; error: string };
+
+export async function runSundayReset(
+  _prev: SundayResetActionResult | undefined,
+): Promise<SundayResetActionResult> {
+  try {
+    const userId = await requireUserId();
+    const summary = await runSundayResetService(userId);
+    revalidatePath("/plan");
+    revalidatePath("/home");
+    const count = summary.mealsPrioritized.length;
+    if (count === 0) {
+      return { ok: true, message: "All meal slots are already filled — nothing to add." };
+    }
+    return { ok: true, message: `Planned ${count} meal${count === 1 ? "" : "s"} for the week.` };
+  } catch {
+    return { ok: false, error: "Something went wrong running the reset. Please try again." };
+  }
 }
