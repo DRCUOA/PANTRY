@@ -374,6 +374,26 @@ textarea,
   }
 }
 
+/* Plan: day-view mode — show only the active day column, full width */
+.plan-calendar-body[data-view="day"] .plan-week-body {
+  grid-template-columns: 1fr;
+}
+
+.plan-calendar-body[data-view="day"] .plan-week-body > * {
+  display: none;
+}
+
+.plan-calendar-body[data-view="day"][data-active-day="0"] .plan-week-body > :nth-child(1),
+.plan-calendar-body[data-view="day"][data-active-day="1"] .plan-week-body > :nth-child(2),
+.plan-calendar-body[data-view="day"][data-active-day="2"] .plan-week-body > :nth-child(3),
+.plan-calendar-body[data-view="day"][data-active-day="3"] .plan-week-body > :nth-child(4),
+.plan-calendar-body[data-view="day"][data-active-day="4"] .plan-week-body > :nth-child(5),
+.plan-calendar-body[data-view="day"][data-active-day="5"] .plan-week-body > :nth-child(6),
+.plan-calendar-body[data-view="day"][data-active-day="6"] .plan-week-body > :nth-child(7) {
+  display: block;
+  border-right: none;
+}
+
 /* Plan: compact meal chip + drag handle (opens detail modal on main area) */
 .plan-meal-compact-wrap {
   display: flex;

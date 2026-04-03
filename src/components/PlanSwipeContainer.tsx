@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, type ReactNode } from "react";
 export const SWIPE_THRESHOLD_PX = 56;
 export const MAX_VERTICAL_DRIFT = 100;
 
-type SwipeDirection = "prev" | "next";
+export type SwipeDirection = "prev" | "next";
 
 export function getSwipeDirection({
   deltaX,

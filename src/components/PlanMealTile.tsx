@@ -480,6 +480,7 @@ export function PlanMealTile(data: PlanMealTileData) {
           </div>
         )}
 
+
         {!editingRecipe && (
           <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-dashed border-[var(--border)] pt-4">
             {showPlannedActions && (

@@ -4,11 +4,9 @@ import { listRecipes } from "@/actions/recipes";
 import { addMealPlanEntry, listMealPlanRange } from "@/actions/meal-plan";
 import { listPantryItemsForPickers } from "@/actions/pantry";
 import { deleteShoppingItem, listShoppingItems, toggleShoppingItemBought } from "@/actions/shopping";
-import { InstructionIcon } from "@/components/InstructionIcon";
-import { PlanDayHeaderCell } from "@/components/PlanDayHeaderCell";
+import { PlanCalendarClient } from "@/components/PlanCalendarClient";
 import { PlanMealTile } from "@/components/PlanMealTile";
 import { PlanDayColumn, PlanDndRoot } from "@/components/PlanScheduleDnd";
-import { PlanSwipeContainer } from "@/components/PlanSwipeContainer";
 import { RecipeLibrarySection } from "@/components/RecipeLibrarySection";
 import { ShoppingListAddForm } from "@/components/ShoppingListAddForm";
 import { StockStateBadge } from "@/components/StockStateBadge";
@@ -325,124 +323,96 @@ export default async function PlanPage({
 
       <div className={activePanel === "schedule" ? "space-y-4" : "hidden space-y-4 md:block"}>
         <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1.8fr)_minmax(18rem,1fr)] lg:items-start lg:gap-6 lg:space-y-0">
-          <PlanSwipeContainer prevHref={prevHref} nextHref={nextHref}>
-            <div className="plan-outer-frame">
-              <div className="plan-week-nav">
-                <Link href={prevHref} className="min-h-11 min-w-14 shrink-0">
-                  ← Prev
-                </Link>
-                <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center">
-                  {weekOffset !== 0 && (
-                    <Link
-                      href={thisWeekHref}
-                      className="text-xs font-semibold text-[var(--today-fg)] hover:underline"
+          <PlanCalendarClient
+            prevWeekHref={prevHref}
+            nextWeekHref={nextHref}
+            thisWeekHref={thisWeekHref}
+            weekOffset={weekOffset}
+            start={start}
+            end={end}
+            dayLabels={dayLabels}
+          >
+            <PlanDndRoot>
+              <div className="plan-week-body">
+                {dayLabels.map((day) => {
+                  const date = day.iso;
+                  const slotMeals = byDate.get(date) ?? [];
+                  return (
+                    <PlanDayColumn
+                      key={date}
+                      date={date}
+                      mobileLabel={day.mobile}
+                      mealCountDesktop={`${slotMeals.length} meal${slotMeals.length === 1 ? "" : "s"}`}
                     >
-                      This week
-                    </Link>
-                  )}
-                  <span className="text-sm font-mono text-[var(--foreground)]">
-                    {start}
-                    <span className="text-[var(--muted)]"> — </span>
-                    {end}
-                  </span>
-                </div>
-                <Link href={nextHref} className="min-h-11 min-w-14 shrink-0">
-                  Next →
-                </Link>
-              </div>
+                      {slotMeals.length === 0 ? (
+                        <p className="mt-2 text-sm text-[var(--muted)]">—</p>
+                      ) : (
+                        <ul className="mt-1 list-none space-y-0 p-0">
+                          {slotMeals.map((entry) => {
+                            const recipe = entry.recipeId
+                              ? recipes.find((candidate) => candidate.id === entry.recipeId)
+                              : null;
+                            const recipeDetail: PlanRecipeDetail | null = recipe
+                              ? toPlanRecipeDetail(recipe)
+                              : null;
+                            let missingSummary: string | null = null;
+                            let pantryRatio: string | null = null;
+                            let missingRequired: number | null = null;
 
-              <div className="plan-day-headers">
-                {dayLabels.map((day) => (
-                  <PlanDayHeaderCell key={day.iso} iso={day.iso} header={day.header} sub={day.sub} />
-                ))}
-              </div>
-
-              <PlanDndRoot>
-                <div className="plan-week-body">
-                  {dayLabels.map((day) => {
-                    const date = day.iso;
-                    const slotMeals = byDate.get(date) ?? [];
-                    return (
-                      <PlanDayColumn
-                        key={date}
-                        date={date}
-                        mobileLabel={day.mobile}
-                        mealCountDesktop={`${slotMeals.length} meal${slotMeals.length === 1 ? "" : "s"}`}
-                      >
-                        {slotMeals.length === 0 ? (
-                          <p className="mt-2 text-sm text-[var(--muted)]">—</p>
-                        ) : (
-                          <ul className="mt-1 list-none space-y-0 p-0">
-                            {slotMeals.map((entry) => {
-                              const recipe = entry.recipeId
-                                ? recipes.find((candidate) => candidate.id === entry.recipeId)
-                                : null;
-                              const recipeDetail: PlanRecipeDetail | null = recipe
-                                ? toPlanRecipeDetail(recipe)
-                                : null;
-                              let missingSummary: string | null = null;
-                              let pantryRatio: string | null = null;
-                              let missingRequired: number | null = null;
-
-                              if (recipe) {
-                                const { missing, matchedCount } = recipePantryStatus(
-                                  {
-                                    id: recipe.id,
-                                    title: recipe.title,
-                                    ingredients: recipe.ingredients.map((ingredient) => ({
-                                      pantryItemName: ingredient.pantryItemName,
-                                      optional: ingredient.optional,
-                                    })),
-                                  },
-                                  pantryRows,
-                                );
-                                const requiredMissing = missing.filter((ingredient) => !ingredient.optional).length;
-                                const totalIngredients = recipe.ingredients.length;
-                                pantryRatio =
-                                  totalIngredients > 0 ? `${matchedCount}/${totalIngredients}` : null;
-                                missingRequired = requiredMissing;
-                                missingSummary =
-                                  totalIngredients > 0
-                                    ? `${matchedCount}/${totalIngredients} in pantry · ${requiredMissing} missing`
-                                    : null;
-                              }
-
-                              return (
-                                <li key={entry.id}>
-                                  <PlanMealTile
-                                    entryId={entry.id}
-                                    plannedDate={entry.plannedDate}
-                                    mealType={entry.mealType}
-                                    status={entry.status}
-                                    recipeTitle={recipe?.title ?? null}
-                                    recipeId={entry.recipeId}
-                                    recipeDetail={recipeDetail}
-                                    plannedServings={entry.servings}
-                                    mealNotes={entry.notes}
-                                    pantryOptions={pantryPickers}
-                                    pantryRatio={pantryRatio}
-                                    missingRequired={missingRequired}
-                                    missingSummary={missingSummary}
-                                    showPlannedActions={Boolean(
-                                      entry.recipeId && entry.status === "planned",
-                                    )}
-                                  />
-                                </li>
+                            if (recipe) {
+                              const { missing, matchedCount } = recipePantryStatus(
+                                {
+                                  id: recipe.id,
+                                  title: recipe.title,
+                                  ingredients: recipe.ingredients.map((ingredient) => ({
+                                    pantryItemName: ingredient.pantryItemName,
+                                    optional: ingredient.optional,
+                                  })),
+                                },
+                                pantryRows,
                               );
-                            })}
-                          </ul>
-                        )}
-                      </PlanDayColumn>
-                    );
-                  })}
-                </div>
-              </PlanDndRoot>
+                              const requiredMissing = missing.filter((ingredient) => !ingredient.optional).length;
+                              const totalIngredients = recipe.ingredients.length;
+                              pantryRatio =
+                                totalIngredients > 0 ? `${matchedCount}/${totalIngredients}` : null;
+                              missingRequired = requiredMissing;
+                              missingSummary =
+                                totalIngredients > 0
+                                  ? `${matchedCount}/${totalIngredients} in pantry · ${requiredMissing} missing`
+                                  : null;
+                            }
 
-              <div className="swipe-hint flex items-center justify-center gap-2 py-1">
-                <InstructionIcon text="Swipe left or right on this calendar to change the week. Drag a meal by the grip onto another day to move it. To duplicate a meal, open it and use Duplicate meal." />
+                            return (
+                              <li key={entry.id}>
+                                <PlanMealTile
+                                  entryId={entry.id}
+                                  plannedDate={entry.plannedDate}
+                                  mealType={entry.mealType}
+                                  status={entry.status}
+                                  recipeTitle={recipe?.title ?? null}
+                                  recipeId={entry.recipeId}
+                                  recipeDetail={recipeDetail}
+                                  plannedServings={entry.servings}
+                                  mealNotes={entry.notes}
+                                  pantryOptions={pantryPickers}
+                                  pantryRatio={pantryRatio}
+                                  missingRequired={missingRequired}
+                                  missingSummary={missingSummary}
+                                  showPlannedActions={Boolean(
+                                    entry.recipeId && entry.status === "planned",
+                                  )}
+                                />
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </PlanDayColumn>
+                  );
+                })}
               </div>
-            </div>
-          </PlanSwipeContainer>
+            </PlanDndRoot>
+          </PlanCalendarClient>
 
           <section className="plan-form-panel lg:sticky lg:top-24">
             <h2 className="font-serif text-lg font-semibold text-[var(--accent)]">Add meal</h2>

@@ -24,10 +24,21 @@ if (mode === "dev") {
   args.push("-H", host);
 
   // HTTPS is required for camera/getUserMedia on non-localhost devices (iPad, phone).
-  // Next.js generates a self-signed cert on first run. Disable with NEXT_DEV_HTTPS=false.
+  // Disable with NEXT_DEV_HTTPS=false.
   const wantHttps = (process.env.NEXT_DEV_HTTPS ?? "true").trim().toLowerCase();
   if (wantHttps !== "false" && wantHttps !== "0") {
-    args.push("--experimental-https");
+    const certDir = resolve(process.cwd(), "certificates");
+    const certFile = resolve(certDir, "localhost.pem");
+    const keyFile = resolve(certDir, "localhost-key.pem");
+    if (existsSync(certFile) && existsSync(keyFile)) {
+      args.push(
+        "--experimental-https",
+        "--experimental-https-cert", certFile,
+        "--experimental-https-key", keyFile,
+      );
+    } else {
+      args.push("--experimental-https");
+    }
   }
 }
 const child = spawn(process.execPath, args, {

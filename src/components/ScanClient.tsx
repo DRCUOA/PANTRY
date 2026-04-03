@@ -131,11 +131,13 @@ export function ScanClient({
   }
 
   useEffect(() => {
+    void startCamera();
     return () => {
       clearTimers();
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -344,6 +346,7 @@ export function ScanClient({
             setTab("scan");
             setCameraError(null);
             setFormError(null);
+            void startCamera();
           }}
           className={`btn-primary-touch flex-1 rounded-lg text-sm font-semibold ${
             tab === "scan" ? "bg-[var(--accent)] text-white" : "text-[var(--muted)]"
@@ -385,7 +388,7 @@ export function ScanClient({
             </div>
           )}
 
-          {showCameraControls && !stream && (
+          {showCameraControls && !stream && !cameraError && (
             <button
               type="button"
               onClick={() => void startCamera()}
@@ -437,7 +440,18 @@ export function ScanClient({
             </div>
           )}
 
-          {cameraError && <p className="text-sm text-[var(--warn)]">{cameraError}</p>}
+          {cameraError && (
+            <div className="space-y-3">
+              <p className="text-sm text-[var(--warn)]">{cameraError}</p>
+              <button
+                type="button"
+                onClick={() => void startCamera()}
+                className="btn-primary-touch w-full rounded-2xl border-2 border-dashed border-[var(--border-accent)] py-8 text-[var(--muted)]"
+              >
+                Try again
+              </button>
+            </div>
+          )}
           {showCameraControls && (
             <div className="flex justify-center">
               <InstructionIcon text="Point the camera at a barcode to scan. HTTPS or localhost is required for the camera on most phones and tablets." />
