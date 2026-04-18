@@ -1,0 +1,32 @@
+# Dependencies (re-installed in build)
+node_modules
+npm-debug.log*
+
+# Build output (regenerated)
+.next
+
+# Environment files (secrets — set via Railway dashboard)
+.env
+.env.*
+
+# Dev certificates
+certificates/
+
+# Source control
+.git
+.gitignore
+
+# IDE / editor
+.vscode
+.idea
+*.swp
+*.swo
+.history
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+README.md
+LICENSE

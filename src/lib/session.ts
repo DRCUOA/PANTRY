@@ -17,15 +17,18 @@ export function getSessionOptions(): SessionOptions {
     }
     password = "dev-only-secret-min-32-chars!!!!!!!!";
   }
+  const isProd = process.env.NODE_ENV === "production";
   return {
     password,
-    cookieName: "pantry_session",
+    // __Host- prefix enforces secure + path=/ and prevents domain overrides.
+    // Browsers reject __Host- cookies over plain HTTP, so skip in dev.
+    cookieName: isProd ? "__Host-pantry_session" : "pantry_session",
     cookieOptions: {
-      secure: process.env.NODE_ENV === "production",
+      secure: isProd,
       httpOnly: true,
-      sameSite: "lax",
-      // ~400 days — long-lived login; no short rolling timeout (was 14 days).
-      maxAge: 60 * 60 * 24 * 400,
+      sameSite: "lax" as const,
+      // 30 days — tighter than 400 days; re-login once a month is reasonable.
+      maxAge: 60 * 60 * 24 * 30,
       path: "/",
     },
   };
