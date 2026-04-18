@@ -1,60 +1,72 @@
 import { logoutAction } from "@/actions/auth";
 import { listPantryLocationSuggestions } from "@/actions/pantry";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { getUserSettings, updateSettings } from "@/actions/settings";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function SettingsPage() {
   const s = await getUserSettings();
   const locationSuggestions = await listPantryLocationSuggestions();
 
   return (
-    <div className="space-y-8 pb-4">
-      <h1 className="font-serif text-2xl font-semibold tracking-tight md:text-3xl">Settings</h1>
+    <div className="space-y-5 pb-4">
+      <header>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight md:text-3xl">Settings</h1>
+      </header>
 
-      <section className="panel-bordered flex flex-wrap items-center justify-between gap-3 border-2 p-5">
-        <p className="text-sm font-medium text-[var(--muted)]">Appearance</p>
-        <ThemeToggle />
+      <section className="ui-card p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="font-semibold">Appearance</p>
+            <p className="text-sm text-[var(--muted)]">Light, dark, or match your device.</p>
+          </div>
+          <ThemeToggle />
+        </div>
       </section>
 
-      <form action={updateSettings} className="panel-bordered space-y-4 border-2 p-5">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-[var(--muted)]">
-            Daily calories (optional)
+      <form action={updateSettings} className="ui-card space-y-4 p-4">
+        <p className="font-semibold">Nutrition goals</p>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+              Calories / day
+            </span>
+            <input
+              name="dailyCalories"
+              type="number"
+              min={1}
+              defaultValue={s?.dailyCalories ?? ""}
+              className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
+            />
           </label>
-          <input
-            name="dailyCalories"
-            type="number"
-            min={1}
-            defaultValue={s?.dailyCalories ?? ""}
-            className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-[var(--muted)]">
-            Daily protein g (optional)
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+              Protein g / day
+            </span>
+            <input
+              name="dailyProteinG"
+              type="number"
+              min={1}
+              defaultValue={s?.dailyProteinG ?? ""}
+              className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
+            />
           </label>
-          <input
-            name="dailyProteinG"
-            type="number"
-            min={1}
-            defaultValue={s?.dailyProteinG ?? ""}
-            className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
-          />
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-[var(--muted)]">Dietary preferences</label>
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+            Dietary preferences
+          </span>
           <textarea
             name="dietaryPreferences"
             rows={3}
             defaultValue={s?.dietaryPreferences ?? ""}
             placeholder="e.g. vegetarian, low sodium"
-            className="input-touch min-h-[120px] w-full resize-y border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted)]"
+            className="input-touch min-h-[100px] w-full resize-y rounded-lg border border-[var(--border-strong)] bg-[var(--background)] placeholder:text-[var(--muted)]"
           />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-[var(--muted)]">
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
             Default location for new items
-          </label>
+          </span>
           <datalist id="settings-location-suggestions">
             {locationSuggestions.map((loc) => (
               <option key={loc} value={loc} />
@@ -66,22 +78,23 @@ export default async function SettingsPage() {
             defaultValue={s?.defaultLocation ?? ""}
             placeholder="Fridge, Pantry, Freezer…"
             autoComplete="off"
-            className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted)]"
+            className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)] placeholder:text-[var(--muted)]"
           />
-        </div>
-        <button type="submit" className="btn-primary-touch w-full bg-[var(--accent)] font-semibold text-white">
+        </label>
+        <button type="submit" className="ui-btn ui-btn--primary w-full">
           Save settings
         </button>
       </form>
 
       <form action={logoutAction}>
-        <button
-          type="submit"
-          className="btn-primary-touch w-full border-2 border-[var(--border-strong)] bg-[var(--surface-elevated)] font-semibold text-[var(--muted)]"
-        >
+        <button type="submit" className="ui-btn ui-btn--ghost w-full">
           Log out
         </button>
       </form>
+
+      <p className="text-center text-xs text-[var(--muted)]">
+        Pantry · single-user edition
+      </p>
     </div>
   );
 }

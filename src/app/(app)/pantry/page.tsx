@@ -1,6 +1,11 @@
-import Link from "next/link";
 import { listPantryItems, listPantryLocationSuggestions, type PantryFilter } from "@/actions/pantry";
-import { PantryEditSheet, type PantryItemDTO } from "@/components/PantryEditSheet";
+import type { PantryItemDTO } from "@/components/PantryEditSheet";
+import { Aisle } from "@/components/ui/Aisle";
+import { ChipRow, Chip } from "@/components/ui/Chip";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { IconPantry, IconSearch } from "@/components/ui/icons";
+import { PantryRow } from "@/components/ui/PantryRow";
+import { pantrySectionFor } from "@/lib/pantry-section";
 
 const FILTERS: { key: PantryFilter; label: string }[] = [
   { key: "all", label: "All" },
@@ -34,72 +39,96 @@ export default async function PantryPage({
 }) {
   const sp = await searchParams;
   const q = sp.q ?? "";
-  const filter = FILTERS.some((f) => f.key === sp.filter)
-    ? (sp.filter as PantryFilter)
-    : "all";
-  const items = await listPantryItems(q, filter);
+  const filter = FILTERS.some((f) => f.key === sp.filter) ? (sp.filter as PantryFilter) : "all";
+  const rows = await listPantryItems(q, filter);
   const locationSuggestions = await listPantryLocationSuggestions();
+  const items = rows.map(toDto);
+
+  const grouped = new Map<string, PantryItemDTO[]>();
+  for (const item of items) {
+    const key = pantrySectionFor(item);
+    const bucket = grouped.get(key) ?? [];
+    bucket.push(item);
+    grouped.set(key, bucket);
+  }
+  const sectionOrder = ["Fridge", "Freezer", "Pantry"];
+  const sortedSections = Array.from(grouped.keys()).sort((a, b) => {
+    const ai = sectionOrder.indexOf(a);
+    const bi = sectionOrder.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
 
   return (
-    <div className="space-y-6 pb-4">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="font-serif text-2xl font-semibold tracking-tight md:text-3xl">Pantry</h1>
-        <Link
-          href="/scan"
-          className="tap-target rounded-lg border border-[var(--border-accent)] bg-[var(--accent-subtle)] px-4 text-sm font-semibold text-[var(--accent)]"
-        >
-          Add
-        </Link>
-      </div>
+    <div className="space-y-4 pb-4">
+      <header className="flex items-baseline justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight md:text-3xl">Pantry</h1>
+          <p className="text-sm text-[var(--muted)]">
+            {items.length} {items.length === 1 ? "item" : "items"}
+            {filter !== "all" && ` · ${FILTERS.find((f) => f.key === filter)?.label.toLowerCase()}`}
+          </p>
+        </div>
+      </header>
 
-      <form method="get" className="panel-bordered flex flex-wrap gap-2">
+      <form method="get" className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]">
+          <IconSearch size={20} />
+        </span>
         <input type="hidden" name="filter" value={filter} />
         <input
           name="q"
           defaultValue={q}
-          placeholder="Search…"
-          className="input-touch min-w-0 flex-1 border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted)]"
+          placeholder="Search pantry…"
+          className="input-touch w-full rounded-full border border-[var(--border-strong)] bg-[var(--surface)] pl-10 pr-4 text-[var(--foreground)] placeholder:text-[var(--muted)]"
+          autoComplete="off"
+          inputMode="search"
         />
-        <button
-          type="submit"
-          className="btn-primary-touch border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--foreground)]"
-        >
-          Go
-        </button>
       </form>
 
-      <details className="panel-bordered">
-        <summary className="tap-target cursor-pointer list-none rounded-lg border border-[var(--border-strong)] bg-[var(--surface-inset)] px-4 text-sm font-semibold text-[var(--foreground)]">
-          More filters
-        </summary>
-        <div className="panel-switcher mt-3 flex-wrap" role="tablist" aria-label="Pantry filters">
-          {FILTERS.map(({ key, label }) => {
-            const href = `/pantry?filter=${key}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
-            const active = filter === key;
+      <ChipRow>
+        {FILTERS.map(({ key, label }) => {
+          const params = new URLSearchParams();
+          if (key !== "all") params.set("filter", key);
+          if (q) params.set("q", q);
+          const href = `/pantry${params.toString() ? `?${params.toString()}` : ""}`;
+          return (
+            <Chip key={key} href={href} active={filter === key}>
+              {label}
+            </Chip>
+          );
+        })}
+      </ChipRow>
+
+      {items.length === 0 ? (
+        <EmptyState
+          icon={<IconPantry size={40} />}
+          title={q ? `No match for “${q}”` : "Pantry is empty"}
+          hint={
+            q
+              ? "Try a different word, or clear the search."
+              : "Tap the + button to scan or type something in."
+          }
+        />
+      ) : (
+        <div className="ui-list-stack">
+          {sortedSections.map((section) => {
+            const sectionItems = grouped.get(section) ?? [];
             return (
-              <Link
-                key={key}
-                href={href}
-                className={`panel-switcher__tab ${active ? "panel-switcher__tab--active" : ""}`}
-                aria-current={active ? "page" : undefined}
-              >
-                {label}
-              </Link>
+              <Aisle key={section} title={section} count={sectionItems.length}>
+                <ul className="space-y-2">
+                  {sectionItems.map((item) => (
+                    <li key={item.id}>
+                      <PantryRow item={item} locationSuggestions={locationSuggestions} />
+                    </li>
+                  ))}
+                </ul>
+              </Aisle>
             );
           })}
         </div>
-      </details>
-
-      {items.length === 0 ? (
-        <p className="text-sm text-[var(--muted)]">No items match. Add something from Scan.</p>
-      ) : (
-        <ul className="space-y-2">
-          {items.map((row) => (
-            <li key={row.id}>
-              <PantryEditSheet item={toDto(row)} locationSuggestions={locationSuggestions} />
-            </li>
-          ))}
-        </ul>
       )}
     </div>
   );

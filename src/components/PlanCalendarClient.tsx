@@ -75,11 +75,18 @@ export function PlanCalendarClient({
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [activeDayIndex, setActiveDayIndex] = useState(0);
 
-  useEffect(() => {
-    if (!today) return;
-    const todayIdx = dayLabels.findIndex((d) => d.iso === today);
-    if (todayIdx >= 0) setActiveDayIndex(todayIdx);
-  }, [today, dayLabels]);
+  // When `today` (or the week range) changes, reset the active day to today. We do this
+  // during render via a key comparison instead of useEffect to avoid cascading renders —
+  // React permits conditional setState during render.
+  const weekKey = `${today ?? ""}|${dayLabels[0]?.iso ?? ""}`;
+  const [lastWeekKey, setLastWeekKey] = useState<string>(weekKey);
+  if (lastWeekKey !== weekKey) {
+    setLastWeekKey(weekKey);
+    if (today) {
+      const idx = dayLabels.findIndex((d) => d.iso === today);
+      if (idx >= 0) setActiveDayIndex(idx);
+    }
+  }
 
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const rafId = useRef<number | null>(null);

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPantryItem } from "@/actions/pantry";
 import { InstructionIcon } from "@/components/InstructionIcon";
+import { IconCheck } from "@/components/ui/icons";
 
 type Tab = "scan" | "manual";
 
@@ -339,31 +340,39 @@ export function ScanClient({
         </p>
       </div>
 
-      <div className="flex gap-1 rounded-xl border-2 border-[var(--border-strong)] bg-[var(--surface-inset)] p-1">
+      <div
+        className="flex gap-1 rounded-full border border-[var(--border)] bg-[var(--surface-inset)] p-1"
+        role="tablist"
+        aria-label="Scan or manual entry"
+      >
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === "scan"}
           onClick={() => {
             setTab("scan");
             setCameraError(null);
             setFormError(null);
             void startCamera();
           }}
-          className={`btn-primary-touch flex-1 rounded-lg text-sm font-semibold ${
-            tab === "scan" ? "bg-[var(--accent)] text-white" : "text-[var(--muted)]"
+          className={`ui-btn flex-1 !min-h-[40px] ${
+            tab === "scan" ? "ui-btn--primary" : "text-[var(--muted)]"
           }`}
         >
           Scan
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === "manual"}
           onClick={() => {
             stopCamera();
             resetScanEntryState();
             setTab("manual");
             setCameraError(null);
           }}
-          className={`btn-primary-touch flex-1 rounded-lg text-sm font-semibold ${
-            tab === "manual" ? "bg-[var(--accent)] text-white" : "text-[var(--muted)]"
+          className={`ui-btn flex-1 !min-h-[40px] ${
+            tab === "manual" ? "ui-btn--primary" : "text-[var(--muted)]"
           }`}
         >
           Manual
@@ -372,17 +381,17 @@ export function ScanClient({
 
       {savedFlash && (
         <div
-          className="rounded-xl border border-[var(--border-accent)] bg-[var(--accent-subtle)] px-4 py-3 text-sm font-medium text-[var(--accent)]"
+          className="ui-card flex items-center gap-2 border-[var(--border-accent)] bg-[var(--accent-subtle)] px-4 py-3 text-sm font-medium text-[var(--accent)]"
           role="status"
         >
-          Saved. Ready for the next item.
+          <IconCheck size={18} /> Saved. Ready for the next item.
         </div>
       )}
 
       {tab === "scan" && (
         <div className="space-y-3">
           {lookingUp && (
-            <div className="panel-bordered flex items-center justify-center gap-3 py-10">
+            <div className="ui-card flex items-center justify-center gap-3 py-10">
               <span className="scan-spinner" />
               <span className="text-sm text-[var(--muted)]">Looking up barcode…</span>
             </div>
@@ -392,7 +401,7 @@ export function ScanClient({
             <button
               type="button"
               onClick={() => void startCamera()}
-              className="btn-primary-touch w-full rounded-2xl border-2 border-dashed border-[var(--border-accent)] py-12 text-[var(--muted)]"
+              className="ui-card w-full border-dashed py-12 text-center text-sm font-semibold text-[var(--muted)] active:bg-[var(--surface-inset)]"
             >
               Open camera
             </button>
@@ -446,7 +455,7 @@ export function ScanClient({
               <button
                 type="button"
                 onClick={() => void startCamera()}
-                className="btn-primary-touch w-full rounded-2xl border-2 border-dashed border-[var(--border-accent)] py-8 text-[var(--muted)]"
+                className="ui-card w-full border-dashed py-8 text-center text-sm font-semibold text-[var(--muted)] active:bg-[var(--surface-inset)]"
               >
                 Try again
               </button>
@@ -465,13 +474,16 @@ export function ScanClient({
           action={async (formData) => {
             await saveItem(formData);
           }}
-          className="plan-form-panel space-y-4 p-4"
+          className="ui-card space-y-4 p-4"
         >
           {detected && (
-            <div className="rounded-xl border border-[var(--border-accent)] bg-[var(--accent-subtle)] px-4 py-3">
+            <div className="ui-card border-[var(--border-accent)] bg-[var(--accent-subtle)] px-4 py-3">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-lg text-white">
-                  ✓
+                <span
+                  className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-white"
+                  aria-hidden
+                >
+                  <IconCheck size={18} />
                 </span>
                 <div className="min-w-0">
                   <p className="text-base font-semibold leading-snug">
@@ -593,14 +605,14 @@ export function ScanClient({
             <button
               type="submit"
               disabled={pending}
-              className="btn-primary-touch flex-1 bg-[var(--accent)] font-semibold text-white disabled:opacity-50"
+              className="ui-btn ui-btn--primary flex-1 disabled:opacity-50"
             >
               {pending ? "Saving…" : tab === "scan" ? "Save and keep scanning" : "Save"}
             </button>
             <button
               type="button"
               onClick={() => setShowAdvanced((value) => !value)}
-              className="btn-primary-touch border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
+              className="ui-btn ui-btn--ghost"
             >
               {showAdvanced ? "Less" : "More"}
             </button>
@@ -609,7 +621,7 @@ export function ScanClient({
                 type="button"
                 disabled={pending}
                 onClick={rescan}
-                className="btn-primary-touch border-2 border-[var(--border-strong)] bg-[var(--surface-elevated)] px-4 text-[var(--foreground)]"
+                className="ui-btn ui-btn--ghost disabled:opacity-50"
               >
                 Scan again
               </button>

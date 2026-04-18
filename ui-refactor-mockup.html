@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pantry — UI Refactor Mockup</title>
+<style>
+  :root {
+    --bg: #FDFBF7;
+    --surface-1: #ffffff;
+    --surface-2: #F4F0EA;
+    --ink: #1A1A24;
+    --ink-muted: #6B6B78;
+    --accent: #D93D00;
+    --accent-soft: #FFF4ED;
+    --warn: #B45309;
+    --warn-soft: #FEF4E6;
+    --danger: #B42318;
+    --danger-soft: #FEE4E2;
+    --success: #067647;
+    --success-soft: #E6F4EC;
+    --border: #EADFD2;
+    --r-sm: 8px;
+    --r-md: 14px;
+    --r-lg: 22px;
+    --shadow-card: 0 1px 2px rgba(20,20,30,.04), 0 4px 12px rgba(20,20,30,.04);
+    --shadow-sheet: 0 -6px 32px rgba(20,20,30,.15);
+    --shadow-fab: 0 8px 24px rgba(217,61,0,.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    body.auto-dark {
+      --bg:#14141A; --surface-1:#1D1D26; --surface-2:#24242F;
+      --ink:#F7F5F0; --ink-muted:#9A99A8; --border:#2D2D39;
+      --accent-soft:#3A1D10; --warn-soft:#3A2810; --danger-soft:#3A1618; --success-soft:#0F2A1E;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #EAE5DC;
+    color: var(--ink);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 32px 24px 64px;
+    justify-items: center;
+  }
+  @media (min-width: 1100px) {
+    body { grid-template-columns: 420px 1fr; align-items: start; }
+  }
+
+  /* ---------- right-side info panel ---------- */
+  .info {
+    max-width: 560px;
+    color: #2B2B36;
+    line-height: 1.55;
+  }
+  .info h1 { font-size: 32px; margin: 0 0 8px; color: var(--accent); }
+  .info h2 { font-size: 18px; margin: 24px 0 8px; }
+  .info p  { font-size: 14.5px; color: #4A4A58; }
+  .legend { font-size: 13px; color: #4A4A58; }
+  .legend span {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    background: #fff; margin: 3px 6px 3px 0; border: 1px solid #d9cfbf;
+  }
+  .tip { background:#FFF4ED; border:1px solid #F4C3A2; color:#7A3A14; border-radius:12px; padding:12px 14px; font-size:13.5px; }
+
+  /* ---------- phone frame ---------- */
+  .phone {
+    position: sticky;
+    top: 24px;
+    width: 390px;
+    height: 820px;
+    background: #0d0d12;
+    border-radius: 44px;
+    padding: 12px;
+    box-shadow: 0 40px 80px rgba(0,0,0,.3), 0 2px 0 #000 inset;
+    overflow: hidden;
+  }
+  .screen-area {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .notch {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 100px; height: 22px; background: #0d0d12; border-radius: 99px; z-index: 100;
+  }
+
+  /* ---------- status bar ---------- */
+  .statusbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 22px 4px; font-size: 13px; font-weight: 600; color: var(--ink);
+  }
+
+  /* ---------- screens ---------- */
+  .screen {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 120px;
+    display: none;
+    position: relative;
+  }
+  .screen.active { display: block; }
+  .screen-header {
+    padding: 8px 20px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .screen-title {
+    font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0;
+  }
+  .screen-sub { color: var(--ink-muted); font-size: 13px; margin: 2px 0 0; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #D93D00, #F48C6B);
+    color: white; font-weight: 700; display: grid; place-items: center; font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* ---------- cards / sections ---------- */
+  .section { padding: 14px 20px; }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-card);
+    padding: 14px;
+  }
+  .card + .card { margin-top: 12px; }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--ink-muted);
+    text-transform: uppercase; margin: 0 0 6px;
+  }
+
+  /* hero card - cook tonight */
+  .hero {
+    background: linear-gradient(135deg, #FFF4ED 0%, #FFEADC 100%);
+    border: 1px solid #F4C3A2;
+    border-radius: var(--r-lg);
+    padding: 16px;
+    display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
+  }
+  .hero .title { font-weight: 700; font-size: 17px; margin: 0; }
+  .hero .meta { color: #7A3A14; font-size: 13px; margin: 4px 0 10px; }
+  .hero img { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; background: #fff; }
+  .progress { height: 6px; background: #F8D3B5; border-radius: 99px; overflow: hidden; }
+  .progress > i { display: block; height: 100%; background: var(--accent); }
+
+  /* carousels */
+  .carousel {
+    display: flex; gap: 10px; overflow-x: auto; padding: 0 20px 4px;
+    scroll-snap-type: x mandatory;
+  }
+  .carousel::-webkit-scrollbar { display:none; }
+  .carousel > .tile {
+    flex: 0 0 150px;
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: var(--r-md); padding: 12px; scroll-snap-align: start;
+  }
+  .tile .n { font-weight: 700; font-size: 15px; margin: 0 0 2px; }
+  .tile .s { color: var(--ink-muted); font-size: 12px; margin: 0; }
+  .pill {
+    display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  }
+  .pill.warn    { background: var(--warn-soft); color: var(--warn); }
+  .pill.danger  { background: var(--danger-soft); color: var(--danger); }
+  .pill.success { background: var(--success-soft); color: var(--success); }
+  .pill.accent  { background: var(--accent-soft); color: var(--accent); }
+
+  /* ---------- pantry list ---------- */
+  .search {
+    margin: 6px 20px 10px;
+    background: var(--surface-2); border-radius: var(--r-md);
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  }
+  .search input {
+    flex: 1; border: 0; background: transparent; outline: none; font-size: 15px; color: var(--ink);
+  }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 0 20px 8px; }
+  .chips::-webkit-scrollbar { display:none; }
+  .chip {
+    flex: 0 0 auto; padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 500;
+    background: var(--surface-2); color: var(--ink); border: 1px solid transparent; cursor: pointer;
+  }
+  .chip.on { background: var(--accent); color: white; }
+
+  .aisle-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 14px 20px 4px;
+  }
+  .aisle-header .t { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--ink-muted); text-transform: uppercase; }
+  .aisle-header .c { font-size: 12px; color: var(--ink-muted); }
+
+  .item-list { padding: 0 20px; }
+  .swipe-wrap {
+    position: relative; overflow: hidden;
+    border-radius: var(--r-md); margin-bottom: 8px;
+    background: linear-gradient(90deg, var(--success) 50%, var(--danger) 50%);
+  }
+  .swipe-actions {
+    position: absolute; inset: 0;
+    display: flex; justify-content: space-between;
+    padding: 0 18px; align-items: center;
+    color: white; font-weight: 600; font-size: 13px;
+    pointer-events: none;
+  }
+  .item {
+    position: relative; z-index: 1;
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 10px;
+    align-items: center; touch-action: pan-y;
+    transition: transform .2s ease;
+    cursor: grab; user-select: none;
+  }
+  .item.dragging { transition: none; cursor: grabbing; }
+  .item .name { font-weight: 600; font-size: 15px; margin: 0; }
+  .item .sub  { color: var(--ink-muted); font-size: 12px; margin: 2px 0 0; display: flex; gap: 6px; }
+  .stepper { display: flex; align-items: center; gap: 2px; background: var(--surface-2); border-radius: 999px; padding: 3px; }
+  .stepper button {
+    width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--surface-1);
+    font-size: 16px; font-weight: 700; color: var(--ink); cursor: pointer;
+  }
+  .stepper .v { min-width: 36px; text-align: center; font-weight: 700; font-size: 14px; }
+  .unit { font-size: 12px; color: var(--ink-muted); margin-left: 6px; }
+
+  /* ---------- plan screen ---------- */
+  .week-strip { display: flex; gap: 8px; padding: 8px 20px 14px; overflow-x: auto; }
+  .week-strip::-webkit-scrollbar { display: none; }
+  .day {
+    flex: 0 0 52px; height: 64px; border-radius: 16px; background: var(--surface-2);
+    display: grid; place-items: center; text-align: center;
+    cursor: pointer;
+  }
+  .day.sel { background: var(--accent); color: white; }
+  .day .dd { font-weight: 700; font-size: 18px; line-height: 1; }
+  .day .wk { font-size: 11px; opacity: .8; margin-top: 4px; }
+
+  .meal-row {
+    padding: 6px 20px;
+  }
+  .meal-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--ink-muted); text-transform: uppercase; margin: 8px 0 6px; }
+  .meal-tile {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md);
+    padding: 12px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+  }
+  .meal-tile .thumb { width: 40px; height: 40px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; font-size: 18px; }
+  .meal-empty {
+    border: 1.5px dashed #d9cfbf; border-radius: var(--r-md);
+    padding: 14px; text-align: center; color: var(--ink-muted); font-size: 13px; cursor: pointer;
+  }
+  .pantry-bar { height: 4px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+  .pantry-bar > i { display: block; height: 100%; background: var(--success); }
+
+  /* ---------- shop screen ---------- */
+  .ship-row {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md);
+    padding: 12px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+    cursor: pointer; user-select: none;
+  }
+  .ship-row .ck {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+    display: grid; place-items: center; flex: 0 0 auto;
+  }
+  .ship-row.done .ck { background: var(--success); border-color: var(--success); color: white; }
+  .ship-row.done .t  { text-decoration: line-through; color: var(--ink-muted); }
+  .ship-row .t { font-weight: 600; font-size: 15px; flex: 1; }
+  .ship-row .tag { font-size: 11px; color: var(--ink-muted); background: var(--surface-2); padding: 3px 8px; border-radius: 999px; }
+
+  /* ---------- scan screen ---------- */
+  .camera-view {
+    aspect-ratio: 3/4;
+    background:
+      linear-gradient(135deg, #202028 0%, #0f0f14 100%);
+    margin: 10px 20px 12px;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    display: grid; place-items: center;
+    color: #9A99A8; font-size: 13px;
+  }
+  .corner {
+    position: absolute; width: 48px; height: 48px;
+    border: 3px solid var(--accent);
+  }
+  .corner.tl { top: 24px; left: 24px; border-right: 0; border-bottom: 0; border-top-left-radius: 10px; }
+  .corner.tr { top: 24px; right: 24px; border-left: 0; border-bottom: 0; border-top-right-radius: 10px; }
+  .corner.bl { bottom: 24px; left: 24px; border-right: 0; border-top: 0; border-bottom-left-radius: 10px; }
+  .corner.br { bottom: 24px; right: 24px; border-left: 0; border-top: 0; border-bottom-right-radius: 10px; }
+  .scan-seg {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    background: var(--surface-2); border-radius: 999px; padding: 4px; margin: 0 20px;
+  }
+  .scan-seg button {
+    border: 0; background: transparent; padding: 8px 10px; font-weight: 600; font-size: 13px;
+    border-radius: 999px; cursor: pointer; color: var(--ink);
+  }
+  .scan-seg button.on { background: var(--surface-1); box-shadow: var(--shadow-card); }
+  .batch-strip { padding: 10px 20px 0; display: flex; gap: 8px; overflow-x: auto; }
+  .batch-chip {
+    flex: 0 0 auto; background: var(--success-soft); color: var(--success);
+    border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+
+  /* ---------- bottom nav + fab ---------- */
+  .bottom {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 8px 14px 22px;
+    background: linear-gradient(180deg, rgba(253,251,247,0) 0%, var(--bg) 40%);
+    pointer-events: none;
+  }
+  .nav {
+    pointer-events: auto;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    padding: 6px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    box-shadow: var(--shadow-card);
+    position: relative;
+  }
+  .nav button {
+    border: 0; background: transparent; padding: 8px 6px;
+    display: grid; place-items: center; gap: 2px; font-size: 11px; font-weight: 600;
+    color: var(--ink-muted); cursor: pointer; border-radius: 18px;
+  }
+  .nav button.on { background: var(--accent-soft); color: var(--accent); }
+  .nav .ico { width: 22px; height: 22px; }
+  .fab {
+    pointer-events: auto;
+    position: absolute; bottom: 74px; right: 22px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--accent); color: white; display: grid; place-items: center;
+    box-shadow: var(--shadow-fab); border: 0; cursor: pointer;
+    font-size: 28px; font-weight: 400;
+  }
+  .fab:active { transform: scale(.94); }
+
+  /* ---------- sheet modal ---------- */
+  .sheet-backdrop {
+    position: absolute; inset: 0; background: rgba(0,0,0,.4); z-index: 90;
+    display: none; animation: fade .2s ease;
+  }
+  .sheet-backdrop.open { display: block; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 91;
+    background: var(--surface-1); border-radius: 22px 22px 0 0;
+    box-shadow: var(--shadow-sheet);
+    transform: translateY(100%); transition: transform .26s cubic-bezier(.2,.8,.2,1);
+    max-height: 86%; overflow-y: auto;
+    padding-bottom: 20px;
+  }
+  .sheet.open { transform: translateY(0); }
+  .sheet-handle {
+    width: 44px; height: 5px; border-radius: 99px; background: var(--surface-2);
+    margin: 10px auto 6px;
+  }
+  .sheet-body { padding: 4px 20px 20px; }
+  .sheet-title { margin: 0 0 4px; font-size: 18px; font-weight: 700; }
+  .sheet-sub { color: var(--ink-muted); margin: 0 0 14px; font-size: 13px; }
+  .field { margin: 10px 0; }
+  .field label { font-size: 12px; color: var(--ink-muted); display: block; margin-bottom: 4px; }
+  .field input, .field select {
+    width: 100%; padding: 12px 14px; border-radius: var(--r-sm);
+    border: 1px solid var(--border); background: var(--surface-1); color: var(--ink); font-size: 15px;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--accent); }
+
+  /* ---------- primary buttons ---------- */
+  .btn-primary {
+    width: 100%; border: 0; background: var(--accent); color: white; font-weight: 700; font-size: 15px;
+    padding: 14px; border-radius: var(--r-md); cursor: pointer;
+  }
+  .btn-primary:active { transform: scale(.99); }
+  .btn-ghost {
+    border: 1px solid var(--border); background: var(--surface-1);
+    border-radius: var(--r-md); padding: 10px 14px; font-weight: 600; color: var(--ink);
+    cursor: pointer; font-size: 14px;
+  }
+  .row-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ---------- undo toast ---------- */
+  .toast {
+    position: absolute; left: 50%; bottom: 160px; transform: translateX(-50%) translateY(20px);
+    background: #1A1A24; color: white; padding: 12px 14px;
+    border-radius: 14px; display: flex; align-items: center; gap: 14px;
+    font-size: 14px; font-weight: 500; z-index: 95; opacity: 0;
+    transition: all .25s ease;
+    max-width: 85%; box-shadow: 0 12px 28px rgba(0,0,0,.35);
+  }
+  .toast.open { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast button { background: transparent; border: 0; color: #FCB894; font-weight: 700; cursor: pointer; }
+
+  /* controls over the phone */
+  .controls {
+    position: sticky; top: 24px; width: 100%; max-width: 420px;
+    display: grid; gap: 8px; grid-template-columns: repeat(4, 1fr);
+    margin-bottom: -8px; z-index: 1;
+  }
+  .controls .h {
+    grid-column: 1/-1; font-size: 12px; color: #4A4A58; margin: 4px 0 -2px; font-weight: 600;
+  }
+  .controls button {
+    background: #fff; border: 1px solid #d9cfbf; border-radius: 10px;
+    padding: 8px; font-size: 12px; font-weight: 600; cursor: pointer; color: #2B2B36;
+  }
+  .controls button.on { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* ---------- intro (mobile stacked) ---------- */
+  @media (max-width: 1099px) {
+    .info { order: 2; }
+    .phone { position: relative; }
+  }
+
+  /* quickadd tab body */
+  .qa-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .qa-chip {
+    background: var(--surface-2); border-radius: 999px; padding: 7px 12px; font-size: 13px;
+    cursor: pointer; font-weight: 500;
+  }
+  .qa-chip:hover { background: var(--accent-soft); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- ========== LEFT: PHONE ========== -->
+<div class="phone-wrap">
+  <div class="controls" id="controls">
+    <div class="h">Jump to screen</div>
+    <button data-goto="today" class="on">Today</button>
+    <button data-goto="pantry">Pantry</button>
+    <button data-goto="plan">Plan</button>
+    <button data-goto="shop">Shop</button>
+    <button data-goto="scan">Quick Add</button>
+    <button data-goto="recipes">Recipes</button>
+    <button data-goto="settings">Settings</button>
+    <button onclick="toast('Demo action')">Fire toast</button>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="notch"></div>
+    <div class="screen-area">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span>●●●●</span>
+      </div>
+
+      <!-- TODAY -->
+      <section id="today" class="screen active">
+        <header class="screen-header">
+          <div>
+            <h1 class="screen-title">Good morning</h1>
+            <p class="screen-sub">Saturday, 18 April · 3 items to use soon</p>
+          </div>
+          <div class="avatar" onclick="openSheet('settings-sheet')">R</div>
+        </header>
+
+        <div class="section">
+          <div class="hero">
+            <div>
+              <p class="eyebrow">Cook tonight</p>
+              <p class="title">Salmon traybake</p>
+              <p class="meta">3 of 5 ingredients in pantry · 18 min prep</p>
+              <div class="progress"><i style="width:60%"></i></div>
+            </div>
+            <div style="font-size:44px">🐟</div>
+          </div>
+        </div>
+
+        <p class="eyebrow" style="padding:0 20px">Use this week</p>
+        <div class="carousel">
+          <div class="tile">
+            <span class="pill danger">Today</span>
+            <p class="n" style="margin-top:6px">Baby spinach</p>
+            <p class="s">Fridge · 150 g</p>
+          </div>
+          <div class="tile">
+            <span class="pill warn">Tomorrow</span>
+            <p class="n" style="margin-top:6px">Greek yoghurt</p>
+            <p class="s">Fridge · 500 g</p>
+          </div>
+          <div class="tile">
+            <span class="pill warn">3 days</span>
+            <p class="n" style="margin-top:6px">Sourdough</p>
+            <p class="s">Counter · half loaf</p>
+          </div>
+          <div class="tile">
+            <span class="pill warn">5 days</span>
+            <p class="n" style="margin-top:6px">Chicken thighs</p>
+            <p class="s">Fridge · 400 g</p>
+          </div>
+        </div>
+
+        <p class="eyebrow" style="padding:14px 20px 0">Running low</p>
+        <div class="carousel">
+          <div class="tile">
+            <span class="pill accent">Low</span>
+            <p class="n" style="margin-top:6px">Olive oil</p>
+            <p class="s">Pantry · 100 ml left</p>
+          </div>
+          <div class="tile">
+            <span class="pill accent">Low</span>
+            <p class="n" style="margin-top:6px">Black pepper</p>
+            <p class="s">Pantry · almost out</p>
+          </div>
+          <div class="tile">
+            <span class="pill accent">Low</span>
+            <p class="n" style="margin-top:6px">Butter</p>
+            <p class="s">Fridge · 80 g</p>
+          </div>
+        </div>
+
+        <p class="eyebrow" style="padding:14px 20px 0">Cook with what you have</p>
+        <div class="carousel">
+          <div class="tile">
+            <span class="pill success">5/5</span>
+            <p class="n" style="margin-top:6px">Tomato pasta</p>
+            <p class="s">15 min · vegetarian</p>
+          </div>
+          <div class="tile">
+            <span class="pill success">4/5</span>
+            <p class="n" style="margin-top:6px">Chickpea curry</p>
+            <p class="s">25 min · vegan</p>
+          </div>
+          <div class="tile">
+            <span class="pill warn">3/5</span>
+            <p class="n" style="margin-top:6px">Salmon traybake</p>
+            <p class="s">18 min · +2 to shop</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="card">
+            <p class="eyebrow">Next planned</p>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <p style="margin:0; font-weight:700; font-size:15px">Wed · Chickpea curry</p>
+                <p style="margin:3px 0 0; color:var(--ink-muted); font-size:12.5px">Dinner · 4 of 5 in pantry</p>
+              </div>
+              <button class="btn-ghost" onclick="goto('plan')">View plan</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANTRY -->
+      <section id="pantry" class="screen">
+        <header class="screen-header">
+          <div>
+            <h1 class="screen-title">Pantry</h1>
+            <p class="screen-sub">42 items · grouped by location</p>
+          </div>
+          <div class="avatar" onclick="openSheet('settings-sheet')">R</div>
+        </header>
+
+        <div class="search">
+          <span style="opacity:.6">🔍</span>
+          <input placeholder="Search items…" />
+          <span style="opacity:.6">🎤</span>
+        </div>
+
+        <div class="chips">
+          <div class="chip on">All</div>
+          <div class="chip">Expiring</div>
+          <div class="chip">Low</div>
+          <div class="chip">Fridge</div>
+          <div class="chip">Freezer</div>
+          <div class="chip">Pantry</div>
+          <div class="chip">Other</div>
+        </div>
+
+        <div class="aisle-header">
+          <span class="t">Fridge</span>
+          <span class="c">12 items</span>
+        </div>
+        <div class="item-list" id="item-list-fridge">
+          <div class="swipe-wrap">
+            <div class="swipe-actions">
+              <span>✓ Used up</span>
+              <span>Delete ✕</span>
+            </div>
+            <div class="item" data-swipe>
+              <div>
+                <p class="name">Baby spinach</p>
+                <p class="sub">
+                  <span class="pill danger">Expires today</span>
+                  <span>Leafy · 150 g</span>
+                </p>
+              </div>
+              <div class="stepper">
+                <button onclick="stepDown(this)">−</button>
+                <span class="v">150</span>
+                <button onclick="stepUp(this)">+</button>
+                <span class="unit">g</span>
+              </div>
+            </div>
+          </div>
+          <div class="swipe-wrap">
+            <div class="swipe-actions">
+              <span>✓ Used up</span>
+              <span>Delete ✕</span>
+            </div>
+            <div class="item" data-swipe>
+              <div>
+                <p class="name">Greek yoghurt</p>
+                <p class="sub">
+                  <span class="pill warn">Expires tomorrow</span>
+                  <span>Dairy · 500 g</span>
+                </p>
+              </div>
+              <div class="stepper">
+                <button onclick="stepDown(this)">−</button>
+                <span class="v">500</span>
+                <button onclick="stepUp(this)">+</button>
+                <span class="unit">g</span>
+              </div>
+            </div>
+          </div>
+          <div class="swipe-wrap">
+            <div class="swipe-actions">
+              <span>✓ Used up</span>
+              <span>Delete ✕</span>
+            </div>
+            <div class="item" data-swipe>
+              <div>
+                <p class="name">Butter</p>
+                <p class="sub">
+                  <span class="pill accent">Low</span>
+                  <span>Dairy · 80 g</span>
+                </p>
+              </div>
+              <div class="stepper">
+                <button onclick="stepDown(this)">−</button>
+                <span class="v">80</span>
+                <button onclick="stepUp(this)">+</button>
+                <span class="unit">g</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="aisle-header">
+          <span class="t">Pantry</span>
+          <span class="c">18 items</span>
+        </div>
+        <div class="item-list">
+          <div class="swipe-wrap">
+            <div class="swipe-actions"><span>✓ Used up</span><span>Delete ✕</span></div>
+            <div class="item" data-swipe>
+              <div>
+                <p class="name">Olive oil</p>
+                <p class="sub">
+                  <span class="pill accent">Low</span>
+                  <span>Oils · 100 ml</span>
+                </p>
+              </div>
+              <div class="stepper">
+                <button onclick="stepDown(this)">−</button>
+                <span class="v">100</span>
+                <button onclick="stepUp(this)">+</button>
+                <span class="unit">ml</span>
+              </div>
+            </div>
+          </div>
+          <div class="swipe-wrap">
+            <div class="swipe-actions"><span>✓ Used up</span><span>Delete ✕</span></div>
+            <div class="item" data-swipe>
+              <div>
+                <p class="name">Basmati rice</p>
+                <p class="sub">
+                  <span class="pill success">In stock</span>
+                  <span>Grains · 2 kg</span>
+                </p>
+              </div>
+              <div class="stepper">
+                <button onclick="stepDown(this)">−</button>
+                <span class="v">2</span>
+                <button onclick="stepUp(this)">+</button>
+                <span class="unit">kg</span>
+              </div>
+            </div>
+          </div>
+          <div class="swipe-wrap">
+            <div class="swipe-actions"><span>✓ Used up</span><span>Delete ✕</span></div>
+            <div class="item" data-swipe>
+              <div>
+                <p class="name">Chickpeas</p>
+                <p class="sub">
+                  <span class="pill success">In stock</span>
+                  <span>Tinned · 3 × 400 g</span>
+                </p>
+              </div>
+              <div class="stepper">
+                <button onclick="stepDown(this)">−</button>
+                <span class="v">3</span>
+                <button onclick="stepUp(this)">+</button>
+                <span class="unit">tin</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="tip" style="margin:16px 20px 0; padding:10px 12px; font-size:12.5px;">
+          Try it: swipe a row left (primary) or right (delete) to preview. Tap +/− to adjust.
+        </p>
+      </section>
+
+      <!-- SCAN / QUICK ADD -->
+      <section id="scan" class="screen">
+        <header class="screen-header">
+          <div>
+            <h1 class="screen-title">Quick add</h1>
+            <p class="screen-sub">Scan · Type · Voice</p>
+          </div>
+          <button class="btn-ghost" onclick="goto('today')">Done (2)</button>
+        </header>
+
+        <div class="scan-seg" id="scan-seg">
+          <button class="on" data-qa="scan">📷 Scan</button>
+          <button data-qa="type">⌨ Type</button>
+          <button data-qa="voice">🎤 Voice</button>
+        </div>
+
+        <div id="qa-scan">
+          <div class="camera-view">
+            <span class="corner tl"></span>
+            <span class="corner tr"></span>
+            <span class="corner bl"></span>
+            <span class="corner br"></span>
+            [ live camera preview ]
+          </div>
+          <div class="batch-strip">
+            <span class="batch-chip">✓ Organic milk · 1 L</span>
+            <span class="batch-chip">✓ Bananas · 6 ct</span>
+          </div>
+          <div class="section">
+            <div class="card">
+              <p class="eyebrow">Detected</p>
+              <p style="margin:2px 0 2px; font-weight:700; font-size:16px;">Organic brown eggs</p>
+              <p style="margin:0; color:var(--ink-muted); font-size:13px;">Dairy · Fridge · best before 5 May</p>
+              <div class="row-split" style="margin-top:10px">
+                <button class="btn-ghost">Edit</button>
+                <button class="btn-primary" onclick="toast('Saved · 3 items', 'success')">Save</button>
+              </div>
+              <p style="font-size:11.5px; color:var(--ink-muted); margin:8px 0 0; text-align:center;">
+                Auto-saves in 2s unless edited
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="qa-type" style="display:none; padding: 0 20px;">
+          <div class="search" style="margin:0 0 10px">
+            <span style="opacity:.6">🔍</span>
+            <input placeholder="Item name…" value="milk" />
+          </div>
+          <p class="eyebrow">Recent</p>
+          <div class="qa-suggestions">
+            <span class="qa-chip">Whole milk 1 L</span>
+            <span class="qa-chip">Oat milk 1 L</span>
+            <span class="qa-chip">Almond milk 500 ml</span>
+            <span class="qa-chip">Milk powder 500 g</span>
+          </div>
+        </div>
+
+        <div id="qa-voice" style="display:none; padding: 20px 20px 0; text-align:center;">
+          <div style="width:120px; height:120px; border-radius:50%; background: var(--accent-soft); margin: 20px auto; display:grid; place-items:center; font-size:56px;">🎤</div>
+          <p style="font-weight:600">Hold to talk</p>
+          <p style="color:var(--ink-muted); font-size:13px">
+            Try "add two cartons of oat milk to the fridge"
+          </p>
+        </div>
+      </section>
+
+      <!-- PLAN -->
+      <section id="plan" class="screen">
+        <header class="screen-header">
+          <div>
+            <h1 class="screen-title">Plan</h1>
+            <p class="screen-sub">Week of 13 April · 14 of 21 slots filled</p>
+          </div>
+          <button class="btn-ghost" onclick="toast('Last week copied', 'success')">Copy week</button>
+        </header>
+
+        <div class="week-strip">
+          <div class="day"><div class="dd">13</div><div class="wk">Mon</div></div>
+          <div class="day"><div class="dd">14</div><div class="wk">Tue</div></div>
+          <div class="day"><div class="dd">15</div><div class="wk">Wed</div></div>
+          <div class="day"><div class="dd">16</div><div class="wk">Thu</div></div>
+          <div class="day"><div class="dd">17</div><div class="wk">Fri</div></div>
+          <div class="day sel"><div class="dd">18</div><div class="wk">Sat</div></div>
+          <div class="day"><div class="dd">19</div><div class="wk">Sun</div></div>
+        </div>
+
+        <div class="meal-row">
+          <p class="meal-label">Breakfast</p>
+          <div class="meal-tile">
+            <div class="thumb">🥣</div>
+            <div>
+              <p style="margin:0; font-weight:600; font-size:14.5px">Overnight oats</p>
+              <div class="pantry-bar"><i style="width:100%"></i></div>
+              <p style="margin:4px 0 0; color:var(--ink-muted); font-size:11.5px">5/5 in pantry</p>
+            </div>
+            <span class="pill success">Ready</span>
+          </div>
+
+          <p class="meal-label">Lunch</p>
+          <div class="meal-tile">
+            <div class="thumb">🥗</div>
+            <div>
+              <p style="margin:0; font-weight:600; font-size:14.5px">Chickpea salad</p>
+              <div class="pantry-bar"><i style="width:80%; background: var(--warn)"></i></div>
+              <p style="margin:4px 0 0; color:var(--ink-muted); font-size:11.5px">4/5 · missing: feta</p>
+            </div>
+            <span class="pill warn">+1</span>
+          </div>
+
+          <p class="meal-label">Dinner</p>
+          <div class="meal-tile">
+            <div class="thumb">🐟</div>
+            <div>
+              <p style="margin:0; font-weight:600; font-size:14.5px">Salmon traybake</p>
+              <div class="pantry-bar"><i style="width:60%; background: var(--warn)"></i></div>
+              <p style="margin:4px 0 0; color:var(--ink-muted); font-size:11.5px">3/5 · missing: salmon, asparagus</p>
+            </div>
+            <span class="pill warn">+2</span>
+          </div>
+
+          <p class="meal-label">Sunday dinner</p>
+          <div class="meal-empty" onclick="openSheet('plan-add')">+ Add meal</div>
+        </div>
+
+        <div class="section">
+          <button class="btn-primary" onclick="{toast('3 items added to Shop','success'); setTimeout(()=>goto('shop'),400);}">Make shopping list (+3 items)</button>
+        </div>
+      </section>
+
+      <!-- SHOP -->
+      <section id="shop" class="screen">
+        <header class="screen-header">
+          <div>
+            <h1 class="screen-title">Shop</h1>
+            <p class="screen-sub">Weekly shop · 8 items · 3 checked</p>
+          </div>
+          <button class="btn-ghost" onclick="toast('Saved as template')">Save</button>
+        </header>
+
+        <div class="section">
+          <div class="progress"><i style="width:37%"></i></div>
+        </div>
+
+        <div class="aisle-header">
+          <span class="t">Produce</span>
+          <span class="c">3 items</span>
+        </div>
+        <div class="item-list">
+          <div class="ship-row"><span class="ck"></span><span class="t">Asparagus · 1 bunch</span><span class="tag">Salmon traybake</span></div>
+          <div class="ship-row done"><span class="ck">✓</span><span class="t">Lemons · 4</span><span class="tag">Salmon traybake</span></div>
+          <div class="ship-row"><span class="ck"></span><span class="t">Spinach · 200 g</span><span class="tag">Low stock</span></div>
+        </div>
+
+        <div class="aisle-header">
+          <span class="t">Meat · Fish</span>
+          <span class="c">1 item</span>
+        </div>
+        <div class="item-list">
+          <div class="ship-row"><span class="ck"></span><span class="t">Salmon fillets · 2</span><span class="tag">Salmon traybake</span></div>
+        </div>
+
+        <div class="aisle-header">
+          <span class="t">Dairy</span>
+          <span class="c">2 items</span>
+        </div>
+        <div class="item-list">
+          <div class="ship-row done"><span class="ck">✓</span><span class="t">Feta · 200 g</span><span class="tag">Chickpea salad</span></div>
+          <div class="ship-row done"><span class="ck">✓</span><span class="t">Butter · 250 g</span><span class="tag">Low stock</span></div>
+        </div>
+
+        <div class="aisle-header">
+          <span class="t">Pantry</span>
+          <span class="c">2 items</span>
+        </div>
+        <div class="item-list">
+          <div class="ship-row"><span class="ck"></span><span class="t">Olive oil · 750 ml</span><span class="tag">Low stock</span></div>
+          <div class="ship-row"><span class="ck"></span><span class="t">Black pepper</span><span class="tag">Low stock</span></div>
+        </div>
+
+        <div class="section">
+          <button class="btn-primary" onclick="openSheet('stock-sheet')">Finish shop · stock the pantry</button>
+        </div>
+      </section>
+
+      <!-- RECIPES -->
+      <section id="recipes" class="screen">
+        <header class="screen-header">
+          <div>
+            <h1 class="screen-title">Recipes</h1>
+            <p class="screen-sub">28 saved · 14 make-able now</p>
+          </div>
+          <div class="avatar">+</div>
+        </header>
+        <div class="search">
+          <span style="opacity:.6">🔍</span>
+          <input placeholder="Search recipes or paste a URL…" />
+        </div>
+        <div class="chips">
+          <div class="chip on">Make-able now</div>
+          <div class="chip">All</div>
+          <div class="chip">Breakfast</div>
+          <div class="chip">Lunch</div>
+          <div class="chip">Dinner</div>
+          <div class="chip">≤ 20 min</div>
+        </div>
+        <div class="section" style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div style="aspect-ratio:4/3; background:linear-gradient(135deg,#F8D3B5,#D93D00); display:grid; place-items:center; font-size:44px">🍝</div>
+            <div style="padding:10px">
+              <p style="margin:0; font-weight:700; font-size:14px">Tomato pasta</p>
+              <p style="margin:3px 0 6px; font-size:12px; color:var(--ink-muted)">15 min</p>
+              <div class="pantry-bar"><i style="width:100%"></i></div>
+              <p style="margin:4px 0 0; font-size:11.5px; color:var(--success); font-weight:600">5/5 in pantry</p>
+            </div>
+          </div>
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div style="aspect-ratio:4/3; background:linear-gradient(135deg,#FFE9B5,#B45309); display:grid; place-items:center; font-size:44px">🍛</div>
+            <div style="padding:10px">
+              <p style="margin:0; font-weight:700; font-size:14px">Chickpea curry</p>
+              <p style="margin:3px 0 6px; font-size:12px; color:var(--ink-muted)">25 min · vegan</p>
+              <div class="pantry-bar"><i style="width:80%; background:var(--warn)"></i></div>
+              <p style="margin:4px 0 0; font-size:11.5px; color:var(--warn); font-weight:600">4/5 · +1 to shop</p>
+            </div>
+          </div>
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div style="aspect-ratio:4/3; background:linear-gradient(135deg,#C5E6D2,#067647); display:grid; place-items:center; font-size:44px">🥗</div>
+            <div style="padding:10px">
+              <p style="margin:0; font-weight:700; font-size:14px">Chickpea salad</p>
+              <p style="margin:3px 0 6px; font-size:12px; color:var(--ink-muted)">10 min · veg</p>
+              <div class="pantry-bar"><i style="width:80%; background:var(--warn)"></i></div>
+              <p style="margin:4px 0 0; font-size:11.5px; color:var(--warn); font-weight:600">4/5</p>
+            </div>
+          </div>
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div style="aspect-ratio:4/3; background:linear-gradient(135deg,#B5D3F8,#1758BA); display:grid; place-items:center; font-size:44px">🐟</div>
+            <div style="padding:10px">
+              <p style="margin:0; font-weight:700; font-size:14px">Salmon traybake</p>
+              <p style="margin:3px 0 6px; font-size:12px; color:var(--ink-muted)">18 min</p>
+              <div class="pantry-bar"><i style="width:60%; background:var(--warn)"></i></div>
+              <p style="margin:4px 0 0; font-size:11.5px; color:var(--warn); font-weight:600">3/5 · +2 to shop</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="settings" class="screen">
+        <header class="screen-header">
+          <div>
+            <h1 class="screen-title">Settings</h1>
+            <p class="screen-sub">Richard · richarddclark2@gmail.com</p>
+          </div>
+        </header>
+        <div class="section">
+          <p class="eyebrow">Goals</p>
+          <div class="card">
+            <div class="row-split" style="gap:14px">
+              <div class="field">
+                <label>Calories / day</label>
+                <input value="2000" />
+              </div>
+              <div class="field">
+                <label>Protein / day (g)</label>
+                <input value="150" />
+              </div>
+            </div>
+            <p style="margin:0; font-size:12px; color:var(--ink-muted)">Presets: 1800 / 120 · 2000 / 150 · 2400 / 180</p>
+          </div>
+
+          <p class="eyebrow" style="margin-top:16px">Dietary</p>
+          <div class="card">
+            <div class="chips" style="padding:0; gap:6px; flex-wrap:wrap">
+              <div class="chip on">Pescetarian</div>
+              <div class="chip">Vegetarian</div>
+              <div class="chip">Vegan</div>
+              <div class="chip on">Low sodium</div>
+              <div class="chip">Gluten-free</div>
+              <div class="chip">Dairy-free</div>
+              <div class="chip">High fiber</div>
+            </div>
+          </div>
+
+          <p class="eyebrow" style="margin-top:16px">Notifications · expiry lead time</p>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; padding: 6px 0"><span>Dairy</span><span class="pill warn">2 days</span></div>
+            <div style="display:flex; justify-content:space-between; padding: 6px 0"><span>Produce</span><span class="pill warn">3 days</span></div>
+            <div style="display:flex; justify-content:space-between; padding: 6px 0"><span>Pantry</span><span class="pill warn">7 days</span></div>
+            <div style="display:flex; justify-content:space-between; padding: 6px 0"><span>Frozen</span><span class="pill">Off</span></div>
+          </div>
+
+          <p class="eyebrow" style="margin-top:16px">Appearance</p>
+          <div class="card">
+            <div class="chips" style="padding:0; gap:6px">
+              <div class="chip">System</div>
+              <div class="chip on">Light</div>
+              <div class="chip">Dark</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- bottom sheets -->
+      <div class="sheet-backdrop" id="backdrop" onclick="closeSheets()"></div>
+
+      <div class="sheet" id="plan-add">
+        <div class="sheet-handle"></div>
+        <div class="sheet-body">
+          <h2 class="sheet-title">Add meal</h2>
+          <p class="sheet-sub">Sunday · pick a recipe or type one</p>
+          <div class="field">
+            <label>Meal type</label>
+            <div class="chips" style="padding:0; gap:6px">
+              <div class="chip">Breakfast</div>
+              <div class="chip">Lunch</div>
+              <div class="chip on">Dinner</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Recipe</label>
+            <input placeholder="Search or paste a URL…" value="pasta" />
+          </div>
+          <p class="eyebrow">Best matches</p>
+          <div class="qa-suggestions">
+            <span class="qa-chip">Tomato pasta · 5/5 ✓</span>
+            <span class="qa-chip">Pesto pasta · 4/5</span>
+            <span class="qa-chip">Pasta e ceci · 5/5 ✓</span>
+          </div>
+          <button class="btn-primary" style="margin-top:20px" onclick="closeSheets(); toast('Pasta e ceci added to Sun dinner','success')">Add to Sunday dinner</button>
+        </div>
+      </div>
+
+      <div class="sheet" id="stock-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-body">
+          <h2 class="sheet-title">Stock the pantry</h2>
+          <p class="sheet-sub">3 checked items will be added to your pantry</p>
+          <div class="item-list" style="padding:0">
+            <div class="swipe-wrap"><div class="swipe-actions"></div>
+              <div class="item">
+                <div>
+                  <p class="name">Feta · 200 g</p>
+                  <p class="sub"><span class="pill warn">2 weeks</span><span>Fridge</span></p>
+                </div>
+                <div class="stepper">
+                  <button>−</button><span class="v">1</span><button>+</button>
+                </div>
+              </div>
+            </div>
+            <div class="swipe-wrap"><div class="swipe-actions"></div>
+              <div class="item">
+                <div>
+                  <p class="name">Butter · 250 g</p>
+                  <p class="sub"><span class="pill warn">1 month</span><span>Fridge</span></p>
+                </div>
+                <div class="stepper">
+                  <button>−</button><span class="v">1</span><button>+</button>
+                </div>
+              </div>
+            </div>
+            <div class="swipe-wrap"><div class="swipe-actions"></div>
+              <div class="item">
+                <div>
+                  <p class="name">Lemons · 4</p>
+                  <p class="sub"><span class="pill warn">2 weeks</span><span>Fridge</span></p>
+                </div>
+                <div class="stepper">
+                  <button>−</button><span class="v">4</span><button>+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" style="margin-top:14px" onclick="closeSheets(); toast('3 items stocked','success'); goto('pantry')">Confirm · add to pantry</button>
+        </div>
+      </div>
+
+      <div class="sheet" id="settings-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-body">
+          <h2 class="sheet-title">Account</h2>
+          <p class="sheet-sub">richarddclark2@gmail.com</p>
+          <button class="btn-ghost" style="width:100%; margin-bottom:8px" onclick="closeSheets(); goto('settings')">Open settings</button>
+          <button class="btn-ghost" style="width:100%; margin-bottom:8px">Export my data</button>
+          <button class="btn-ghost" style="width:100%; color:var(--danger)">Sign out</button>
+        </div>
+      </div>
+
+      <!-- fab + nav -->
+      <div class="bottom">
+        <button class="fab" onclick="goto('scan'); vibe()">＋</button>
+        <div class="nav" id="nav">
+          <button data-goto="today" class="on">
+            <span class="ico">🏠</span><span>Today</span>
+          </button>
+          <button data-goto="pantry">
+            <span class="ico">📦</span><span>Pantry</span>
+          </button>
+          <button data-goto="plan">
+            <span class="ico">📅</span><span>Plan</span>
+          </button>
+          <button data-goto="shop">
+            <span class="ico">🛒</span><span>Shop</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast">
+        <span id="toast-msg">Item used up</span>
+        <button onclick="hideToast()">Undo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== RIGHT: PLAN SUMMARY ========== -->
+<div class="info">
+  <h1>Pantry — UI refactor mockup</h1>
+  <p>
+    This is an interactive mock of the proposed UI. Tap the buttons above the phone,
+    the bottom nav, or the orange <strong>+ FAB</strong> to move between screens.
+    On the <strong>Pantry</strong> screen, <strong>drag an item row left or right</strong> to
+    preview swipe actions. The <strong>Toast</strong> button fires the undo snackbar that would
+    appear after any destructive action.
+  </p>
+
+  <h2>What's new</h2>
+  <div class="legend">
+    <span>4-tab nav (Today · Pantry · Plan · Shop)</span>
+    <span>Global + FAB → Quick Add (Scan · Type · Voice)</span>
+    <span>Swipe-to-act on every list</span>
+    <span>Inline +/− steppers, no sheet to change qty</span>
+    <span>Pantry grouped by location, Shop grouped by aisle</span>
+    <span>Copy-last-week, Make-shopping-list in one tap</span>
+    <span>Undo snackbar replaces confirm() dialogs</span>
+    <span>Smart defaults on scan (last location, product-type expiry)</span>
+  </div>
+
+  <h2>What's gone</h2>
+  <div class="legend">
+    <span>Scan as a dedicated bottom-nav tab</span>
+    <span>Three-icon cluster on pantry rows</span>
+    <span>&lt;datalist&gt; autocomplete</span>
+    <span>Multi-step recipe import wizard</span>
+    <span>confirm() dialogs</span>
+    <span>Shopping list hidden inside Plan</span>
+  </div>
+
+  <h2>How to read this</h2>
+  <div class="tip">
+    This mockup is paired with <code>ui-refactor-plan.docx</code>, which has the full audit,
+    competitive review, design principles, screen specs, interaction catalog, phased
+    implementation plan, risks, and success metrics. The visuals here are illustrative —
+    the doc is the source of truth for the plan.
+  </div>
+</div>
+
+<script>
+  /* ---------- navigation ---------- */
+  function goto(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.goto === id));
+    document.querySelectorAll('#controls button[data-goto]').forEach(b => b.classList.toggle('on', b.dataset.goto === id));
+    // reset scroll
+    document.getElementById(id).scrollTop = 0;
+  }
+  document.querySelectorAll('[data-goto]').forEach(btn => {
+    btn.addEventListener('click', () => goto(btn.dataset.goto));
+  });
+
+  /* ---------- sheets ---------- */
+  function openSheet(id) {
+    document.getElementById('backdrop').classList.add('open');
+    document.getElementById(id).classList.add('open');
+  }
+  function closeSheets() {
+    document.getElementById('backdrop').classList.remove('open');
+    document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+  }
+
+  /* ---------- toast ---------- */
+  let toastTimer;
+  function toast(msg, kind) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg || 'Item updated';
+    t.classList.add('open');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 3200);
+    vibe();
+  }
+  function hideToast() {
+    document.getElementById('toast').classList.remove('open');
+  }
+
+  /* ---------- haptic helper ---------- */
+  function vibe(ms) {
+    if (navigator.vibrate) navigator.vibrate(ms || 10);
+  }
+
+  /* ---------- steppers ---------- */
+  function stepUp(btn) {
+    const v = btn.parentElement.querySelector('.v');
+    v.textContent = Number(v.textContent) + 1;
+    vibe();
+  }
+  function stepDown(btn) {
+    const v = btn.parentElement.querySelector('.v');
+    v.textContent = Math.max(0, Number(v.textContent) - 1);
+    vibe();
+  }
+
+  /* ---------- swipe rows ---------- */
+  document.querySelectorAll('[data-swipe]').forEach(el => {
+    let startX = 0, dx = 0, active = false;
+    el.addEventListener('pointerdown', e => {
+      active = true; startX = e.clientX; dx = 0;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('dragging');
+    });
+    el.addEventListener('pointermove', e => {
+      if (!active) return;
+      dx = e.clientX - startX;
+      el.style.transform = `translateX(${dx}px)`;
+    });
+    function end() {
+      if (!active) return;
+      active = false;
+      el.classList.remove('dragging');
+      if (dx < -80) {
+        el.style.transform = 'translateX(-100%)';
+        setTimeout(() => { el.style.transform=''; toast('Marked used up · undo?', 'success'); }, 260);
+      } else if (dx > 80) {
+        el.style.transform = 'translateX(100%)';
+        setTimeout(() => { el.style.transform=''; toast('Deleted · undo?', 'danger'); }, 260);
+      } else {
+        el.style.transform = '';
+      }
+      dx = 0;
+    }
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+    el.addEventListener('pointerleave', end);
+  });
+
+  /* ---------- quick add tabs ---------- */
+  document.querySelectorAll('#scan-seg button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#scan-seg button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      const tab = b.dataset.qa;
+      document.getElementById('qa-scan').style.display  = tab === 'scan'  ? '' : 'none';
+      document.getElementById('qa-type').style.display  = tab === 'type'  ? '' : 'none';
+      document.getElementById('qa-voice').style.display = tab === 'voice' ? '' : 'none';
+    });
+  });
+
+  /* ---------- shop rows: tap to check off ---------- */
+  document.querySelectorAll('.ship-row').forEach(r => {
+    r.addEventListener('click', () => {
+      r.classList.toggle('done');
+      r.querySelector('.ck').textContent = r.classList.contains('done') ? '✓' : '';
+      vibe();
+    });
+  });
+
+  /* ---------- chips on pantry filter ---------- */
+  document.querySelectorAll('.chips').forEach(group => {
+    group.addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      // only filter chips should be single-select (pantry); leave dietary multi-select
+      if (group.closest('#pantry') || group.closest('#recipes') || group.closest('#plan-add') ) {
+        group.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+      }
+      chip.classList.toggle('on');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BottomNav } from "@/components/BottomNav";
 import { getSession } from "@/lib/get-session";
+import { IconSettings } from "@/components/ui/icons";
+import { QuickAdd } from "@/components/ui/QuickAdd";
+import { TabBar } from "@/components/ui/TabBar";
 
 export default async function AppShellLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -9,10 +12,23 @@ export default async function AppShellLayout({ children }: { children: React.Rea
   }
   return (
     <div className="flex min-h-full flex-col pb-28 md:pb-24">
-      <main className="safe-pt mx-auto w-full max-w-5xl flex-1 px-4 pt-5 md:px-8 md:pt-8">
+      <header className="safe-pt sticky top-0 z-30 mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-2 backdrop-blur-md md:max-w-3xl md:px-6">
+        <Link href="/home" className="font-serif text-sm font-semibold tracking-tight text-[var(--foreground)]">
+          Pantry
+        </Link>
+        <Link
+          href="/settings"
+          className="tap-target rounded-full p-2 text-[var(--muted)]"
+          aria-label="Settings"
+        >
+          <IconSettings size={20} />
+        </Link>
+      </header>
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-4 md:max-w-3xl md:px-6">
         {children}
       </main>
-      <BottomNav />
+      <QuickAdd />
+      <TabBar />
     </div>
   );
 }

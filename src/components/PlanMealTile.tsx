@@ -11,8 +11,8 @@ import {
   markMealCooked,
   updateMealPlanEntryDetails,
 } from "@/actions/meal-plan";
-import { MobileSheet } from "@/components/MobileSheet";
 import { RecipeInlineEditForm } from "@/components/RecipeInlineEditForm";
+import { SheetModal } from "@/components/ui/SheetModal";
 import type { PlanRecipeDetail } from "@/lib/plan-recipe";
 import { formatMealTypeLabel } from "@/lib/recipe-meal-types";
 
@@ -253,12 +253,11 @@ export function PlanMealTile(data: PlanMealTileData) {
         </button>
       </div>
 
-      <MobileSheet
+      <SheetModal
         open={open}
         onClose={close}
         title={titleLine}
-        eyebrow={mealType}
-        subtitle={<span className="font-mono text-xs text-[var(--muted)]">{plannedDate}</span>}
+        description={`${mealType} · ${plannedDate}`}
       >
         {missingSummary && !editingRecipe && (
           <p className="receipt-card-muted border-t border-[var(--border)] pt-3 text-sm">
@@ -528,7 +527,7 @@ export function PlanMealTile(data: PlanMealTileData) {
             Updating…
           </p>
         )}
-      </MobileSheet>
+      </SheetModal>
     </>
   );
 }

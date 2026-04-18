@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import type { PantryPickerRow } from "@/actions/pantry";
 import { deleteRecipe } from "@/actions/recipes";
-import { MobileSheet } from "@/components/MobileSheet";
 import { RecipeInlineEditForm } from "@/components/RecipeInlineEditForm";
+import { SheetModal } from "@/components/ui/SheetModal";
 import type { PlanRecipeDetail } from "@/lib/plan-recipe";
 import { formatMealTypeLabel } from "@/lib/recipe-meal-types";
 
@@ -91,12 +91,11 @@ export function RecipeLibraryRow({
           </button>
         </div>
       </li>
-      <MobileSheet
+      <SheetModal
         open={open}
         onClose={close}
         title={detail.title}
-        eyebrow="Recipe"
-        subtitle={formatMealTypeLabel(detail.mealType)}
+        description={`Recipe · ${formatMealTypeLabel(detail.mealType)}`}
       >
         {editingRecipe ? (
           <RecipeInlineEditForm
@@ -205,7 +204,7 @@ export function RecipeLibraryRow({
             </div>
           </div>
         )}
-      </MobileSheet>
+      </SheetModal>
     </>
   );
 }
