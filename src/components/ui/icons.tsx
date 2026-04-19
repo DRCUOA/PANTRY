@@ -219,3 +219,33 @@ export function IconKeyboard(p: IconProps) {
     </Base>
   );
 }
+
+export function IconUser(p: IconProps) {
+  return (
+    <Base {...p}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M20 21a8 8 0 0 0-16 0" />
+    </Base>
+  );
+}
+
+export function IconBasket(p: IconProps) {
+  return (
+    <Base {...p}>
+      <path d="M5.2 11h13.6l-1.2 8H6.4z" />
+      <path d="M8 11 12 3l4 8" />
+      <path d="M15 15l2-1" strokeWidth="1.8" />
+      <path d="M15 17l1.5 1" strokeWidth="1.8" />
+      <path d="M14.5 14.5l2.5 4" strokeWidth="1.8" />
+    </Base>
+  );
+}
+
+export function IconHistory(p: IconProps) {
+  return (
+    <Base {...p}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </Base>
+  );
+}

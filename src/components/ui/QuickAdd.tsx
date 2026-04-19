@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { addShoppingItem } from "@/actions/shopping";
 import { createPantryItem } from "@/actions/pantry";
-import { IconBarcode, IconKeyboard, IconPlus, IconShop } from "./icons";
+import { IconBarcode, IconKeyboard, IconShop } from "./icons";
 import { SheetModal } from "./SheetModal";
 
 /**
- * Global quick-add: floating action button that offers Scan / Type item / Add to shopping.
- * Type and shopping submit a server action inline; Scan just links to /scan.
+ * Center FAB: rounded-square basket icon that opens the quick-add sheet.
+ * Designed to sit in the center slot of the TabBar grid.
  */
 export function QuickAdd() {
   const [open, setOpen] = useState(false);
@@ -24,59 +24,75 @@ export function QuickAdd() {
           setMode("root");
           setOpen(true);
         }}
-        className="fixed z-[45] inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-2xl active:scale-95"
+        className="relative -top-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent)] text-white active:scale-95"
         style={{
-          right: "max(1rem, env(safe-area-inset-right))",
-          bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.25rem)",
-          boxShadow: "0 10px 24px rgba(0,0,0,0.28), 0 0 32px var(--accent-glow)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.25), 0 0 24px var(--accent-glow)",
         }}
       >
-        <IconPlus size={28} />
+        {/* Inline basket+fork icon matching app logo */}
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5.2 11h13.6l-1.2 8H6.4z" />
+          <path d="M8 11 12 3l4 8" />
+          <path d="M15 15l2-1" strokeWidth="1.8" />
+          <path d="M15 17l1.5 1" strokeWidth="1.8" />
+          <path d="M14.5 14.5l2.5 4" strokeWidth="1.8" />
+        </svg>
       </button>
       <SheetModal
         open={open}
         onClose={() => setOpen(false)}
         title={mode === "root" ? "Add something" : mode === "type" ? "Add pantry item" : "Add to shopping list"}
-        description={mode === "root" ? "Scan a barcode, type it, or add to the shopping list." : undefined}
       >
         {mode === "root" && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="space-y-2">
             <Link
               href="/scan"
               onClick={() => setOpen(false)}
-              className="ui-card flex flex-col items-start gap-2 p-4 active:bg-[var(--surface-inset)]"
+              className="flex items-center gap-3 rounded-xl px-4 py-3 active:bg-[var(--surface-inset)]"
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
-                <IconBarcode />
+                <IconBarcode size={20} />
               </span>
-              <span className="font-semibold">Scan barcode</span>
-              <span className="text-sm text-[var(--muted)]">
-                Open the camera and drop it in your pantry.
-              </span>
+              <div>
+                <p className="font-semibold">Scan barcode</p>
+                <p className="text-sm text-[var(--muted)]">Add with your camera</p>
+              </div>
             </Link>
             <button
               type="button"
               onClick={() => setMode("type")}
-              className="ui-card flex flex-col items-start gap-2 p-4 text-left active:bg-[var(--surface-inset)]"
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left active:bg-[var(--surface-inset)]"
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
-                <IconKeyboard />
+                <IconKeyboard size={20} />
               </span>
-              <span className="font-semibold">Type a pantry item</span>
-              <span className="text-sm text-[var(--muted)]">Quick add without a barcode.</span>
+              <div>
+                <p className="font-semibold">Type a pantry item</p>
+                <p className="text-sm text-[var(--muted)]">Quick add without scanning</p>
+              </div>
             </button>
             <button
               type="button"
               onClick={() => setMode("shop")}
-              className="ui-card flex flex-col items-start gap-2 p-4 text-left active:bg-[var(--surface-inset)]"
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left active:bg-[var(--surface-inset)]"
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
-                <IconShop />
+                <IconShop size={20} />
               </span>
-              <span className="font-semibold">Add to shopping</span>
-              <span className="text-sm text-[var(--muted)]">
-                Remember to buy it next time.
-              </span>
+              <div>
+                <p className="font-semibold">Add to shopping</p>
+                <p className="text-sm text-[var(--muted)]">Remember to buy it next time</p>
+              </div>
             </button>
           </div>
         )}

@@ -2,33 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconHome, IconPantry, IconPlan, IconShop } from "./icons";
+import { IconHome, IconPlan, IconClock, IconUser } from "./icons";
+import { QuickAdd } from "./QuickAdd";
 
-const TABS = [
-  { href: "/home", label: "Today", icon: IconHome, match: (p: string) => p === "/home" || p === "/" },
-  {
-    href: "/pantry",
-    label: "Pantry",
-    icon: IconPantry,
-    match: (p: string) => p.startsWith("/pantry") || p.startsWith("/scan"),
-  },
+const LEFT_TABS = [
+  { href: "/home", label: "Home", icon: IconHome, match: (p: string) => p === "/home" || p === "/" },
   {
     href: "/plan",
     label: "Plan",
     icon: IconPlan,
     match: (p: string) => p.startsWith("/plan") || p.startsWith("/recipes"),
   },
+] as const;
+
+const RIGHT_TABS = [
   {
-    href: "/shop",
-    label: "Shop",
-    icon: IconShop,
-    match: (p: string) => p.startsWith("/shop"),
+    href: "/pantry",
+    label: "Pantry",
+    icon: IconClock,
+    match: (p: string) => p.startsWith("/pantry") || p.startsWith("/scan"),
+  },
+  {
+    href: "/settings",
+    label: "Profile",
+    icon: IconUser,
+    match: (p: string) => p.startsWith("/settings"),
   },
 ] as const;
 
 /**
- * Fixed bottom nav. Styled with inline Tailwind utilities (no reliance on custom
- * .ui-tabbar class) so it can't silently break if globals.css layering shifts.
+ * Bottom nav with integrated center FAB.
+ * 5-slot layout: 2 tabs | raised FAB | 2 tabs
  */
 export function TabBar() {
   const pathname = usePathname() ?? "/";
@@ -38,8 +42,8 @@ export function TabBar() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md"
       style={{ paddingBottom: "max(0.35rem, env(safe-area-inset-bottom))" }}
     >
-      <div className="mx-auto grid max-w-2xl grid-cols-4 items-stretch gap-0 px-2 pt-1 pb-1">
-        {TABS.map((t) => {
+      <div className="mx-auto grid max-w-md grid-cols-5 items-end gap-0 px-2 pt-1 pb-1">
+        {LEFT_TABS.map((t) => {
           const active = t.match(pathname);
           const Icon = t.icon;
           return (
@@ -47,7 +51,32 @@ export function TabBar() {
               key={t.href}
               href={t.href}
               aria-current={active ? "page" : undefined}
-              className={`flex min-h-[48px] flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 text-[0.7rem] font-semibold ${
+              className={`flex min-h-[48px] flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 text-[0.65rem] font-medium ${
+                active ? "text-[var(--accent)]" : "text-[var(--muted)]"
+              }`}
+            >
+              <span className="inline-flex h-6 w-6 items-center justify-center">
+                <Icon size={22} />
+              </span>
+              <span>{t.label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Center FAB slot */}
+        <div className="flex items-center justify-center">
+          <QuickAdd />
+        </div>
+
+        {RIGHT_TABS.map((t) => {
+          const active = t.match(pathname);
+          const Icon = t.icon;
+          return (
+            <Link
+              key={t.href}
+              href={t.href}
+              aria-current={active ? "page" : undefined}
+              className={`flex min-h-[48px] flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 text-[0.65rem] font-medium ${
                 active ? "text-[var(--accent)]" : "text-[var(--muted)]"
               }`}
             >
