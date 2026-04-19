@@ -37,11 +37,17 @@ COPY --from=builder /app/public                                  ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone  ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static      ./.next/static
 
+# Copy migration runner + SQL files (lightweight — no drizzle-kit needed)
+COPY --from=builder /app/scripts/migrate.mjs                     ./scripts/migrate.mjs
+COPY --from=builder /app/drizzle                                 ./drizzle
+
+# Startup script: migrate then serve
+COPY --from=builder /app/scripts/start.sh                        ./start.sh
+
 USER nextjs
 
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# The standalone output produces a server.js at the root
-CMD ["node", "server.js"]
+CMD ["sh", "start.sh"]
