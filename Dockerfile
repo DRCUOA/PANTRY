@@ -41,6 +41,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static      ./.next/static
 COPY --from=builder /app/scripts/migrate.mjs                     ./scripts/migrate.mjs
 COPY --from=builder /app/drizzle                                 ./drizzle
 
+# The standalone trace doesn't include `postgres` for migrate.mjs — copy it explicitly
+COPY --from=deps /app/node_modules/postgres                      ./node_modules/postgres
+
 # Startup script: migrate then serve
 COPY --from=builder /app/scripts/start.sh                        ./start.sh
 
