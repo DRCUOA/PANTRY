@@ -6,7 +6,10 @@ import { getDb } from "@/db";
 import { pantryItems, shoppingListItems } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 import { parseShoppingFormData, type AddShoppingItemDto } from "@/actions/payload-schemas";
-import { listShoppingItemsReadModel } from "@/services/shopping.service";
+import {
+  clearShoppingListService,
+  listShoppingItemsReadModel,
+} from "@/services/shopping.service";
 
 async function requireUserId(): Promise<number> {
   const session = await getSession();
@@ -135,4 +138,25 @@ export async function deleteShoppingItem(id: number): Promise<void> {
     .delete(shoppingListItems)
     .where(and(eq(shoppingListItems.id, id), eq(shoppingListItems.userId, userId)));
   revalidatePath("/plan");
+}
+
+export type ClearShoppingResult =
+  | { ok: true; deleted: number }
+  | { ok: false; error: string };
+
+/**
+ * Permanently remove every shopping list item the user owns. Destructive — the
+ * UI wraps this in a confirm prompt and a toast warning.
+ */
+export async function clearShoppingList(): Promise<ClearShoppingResult> {
+  const userId = await requireUserId();
+  try {
+    const result = await clearShoppingListService(userId);
+    revalidatePath("/shop");
+    revalidatePath("/plan");
+    revalidatePath("/home");
+    return { ok: true, deleted: result.deleted };
+  } catch {
+    return { ok: false, error: "Could not clear the list. Try again." };
+  }
 }

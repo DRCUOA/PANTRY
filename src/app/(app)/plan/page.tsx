@@ -5,6 +5,7 @@ import { listPantryItemsForPickers } from "@/actions/pantry";
 import { listRecipes } from "@/actions/recipes";
 import { getUserSettings } from "@/actions/settings";
 import { PlanMealTile } from "@/components/PlanMealTile";
+import { PlanWeekActions } from "@/components/PlanWeekActions";
 import { SundayResetButton } from "@/components/SundayResetButton";
 import { Chip, ChipRow } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -392,6 +393,14 @@ export default async function PlanPage({
           already have.
         </p>
         <SundayResetButton />
+        <div className="border-t border-[var(--border)] pt-3">
+          <PlanWeekActions
+            startDate={weekStart}
+            endDate={weekEnd}
+            weekLabel={weekLabel}
+            hasPlannedMeals={meals.length > 0}
+          />
+        </div>
         <div className="border-t border-[var(--border)] pt-3">
           <ChipRow>
             <Chip href="/recipes">Browse recipes</Chip>

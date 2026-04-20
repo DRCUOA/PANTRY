@@ -244,6 +244,40 @@ export async function duplicateMealPlanEntryToDateService(
   return { ok: true };
 }
 
+/**
+ * Permanently delete every meal-plan entry inside the inclusive [startDate,
+ * endDate] window for the user. Returns the count removed so the caller can
+ * shape its toast message.
+ */
+export async function clearMealPlanRangeService(
+  userId: number,
+  startDate: string,
+  endDate: string,
+): Promise<{ deleted: number }> {
+  const db = getDb();
+  const existing = await db
+    .select({ id: mealPlanEntries.id })
+    .from(mealPlanEntries)
+    .where(
+      and(
+        eq(mealPlanEntries.userId, userId),
+        gte(mealPlanEntries.plannedDate, startDate),
+        lte(mealPlanEntries.plannedDate, endDate),
+      ),
+    );
+  if (existing.length === 0) return { deleted: 0 };
+  await db
+    .delete(mealPlanEntries)
+    .where(
+      and(
+        eq(mealPlanEntries.userId, userId),
+        gte(mealPlanEntries.plannedDate, startDate),
+        lte(mealPlanEntries.plannedDate, endDate),
+      ),
+    );
+  return { deleted: existing.length };
+}
+
 export async function addMissingToShoppingListService(userId: number, mealPlanId: number): Promise<void> {
   const db = getDb();
   const entry = await db

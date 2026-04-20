@@ -1,5 +1,6 @@
 import { listPantryUnitSuggestions } from "@/actions/pantry";
 import { listRecentShoppingNames, listShoppingItems } from "@/actions/shopping";
+import { ClearShoppingButton } from "@/components/ClearShoppingButton";
 import { ShoppingQuickAddForm } from "@/components/ShoppingQuickAddForm";
 import { Aisle } from "@/components/ui/Aisle";
 import { ChipRow, Chip } from "@/components/ui/Chip";
@@ -66,6 +67,7 @@ export default async function ShopPage({
             {activeCount} to get · {boughtCount} done
           </p>
         </div>
+        <ClearShoppingButton totalCount={all.length} />
       </header>
 
       <ShoppingQuickAddForm

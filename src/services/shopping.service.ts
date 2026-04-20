@@ -216,3 +216,19 @@ export async function addShoppingItemService(
 ): Promise<ServiceResult<{ shoppingItemId: number }>> {
   return { ok: false, error: "Not implemented" };
 }
+
+/**
+ * Permanently delete every shopping list item belonging to the user (regardless
+ * of status). Returns the number of rows that were removed so callers can
+ * surface meaningful confirmation toasts.
+ */
+export async function clearShoppingListService(userId: number): Promise<{ deleted: number }> {
+  const db = getDb();
+  const existing = await db
+    .select({ id: shoppingListItems.id })
+    .from(shoppingListItems)
+    .where(eq(shoppingListItems.userId, userId));
+  if (existing.length === 0) return { deleted: 0 };
+  await db.delete(shoppingListItems).where(eq(shoppingListItems.userId, userId));
+  return { deleted: existing.length };
+}
