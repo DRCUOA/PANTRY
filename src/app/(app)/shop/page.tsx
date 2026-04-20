@@ -1,4 +1,6 @@
-import { addShoppingItem, listShoppingItems } from "@/actions/shopping";
+import { listPantryUnitSuggestions } from "@/actions/pantry";
+import { listRecentShoppingNames, listShoppingItems } from "@/actions/shopping";
+import { ShoppingQuickAddForm } from "@/components/ShoppingQuickAddForm";
 import { Aisle } from "@/components/ui/Aisle";
 import { ChipRow, Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -27,7 +29,11 @@ export default async function ShopPage({
 }) {
   const sp = await searchParams;
   const filter = parseFilter(sp.filter);
-  const all = await listShoppingItems();
+  const [all, unitSuggestions, recentNames] = await Promise.all([
+    listShoppingItems(),
+    listPantryUnitSuggestions(),
+    listRecentShoppingNames(),
+  ]);
   const activeCount = all.filter((i) => i.status === "needed").length;
   const boughtCount = all.length - activeCount;
 
@@ -62,24 +68,10 @@ export default async function ShopPage({
         </div>
       </header>
 
-      <form
-        action={async (fd: FormData) => {
-          "use server";
-          await addShoppingItem(fd);
-        }}
-        className="flex items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--surface)] px-2 py-1"
-      >
-        <input
-          name="name"
-          required
-          placeholder="Add item…"
-          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-base outline-none"
-          autoComplete="off"
-        />
-        <button type="submit" className="ui-btn ui-btn--primary h-11 px-4 text-sm">
-          Add
-        </button>
-      </form>
+      <ShoppingQuickAddForm
+        unitSuggestions={unitSuggestions}
+        recentNames={recentNames}
+      />
 
       <ChipRow>
         <Chip href="/shop" active={filter === "active"} count={activeCount}>

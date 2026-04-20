@@ -1,10 +1,16 @@
 import Link from "next/link";
-import { listPantryItemsForPickers } from "@/actions/pantry";
+import {
+  listPantryItemsForPickers,
+  listPantryUnitSuggestions,
+} from "@/actions/pantry";
 import { RecipeImportWizard } from "@/components/RecipeImportWizard";
 import { RecipeNewForm } from "@/components/RecipeNewForm";
 
 export default async function NewRecipePage() {
-  const pantryOptions = await listPantryItemsForPickers();
+  const [pantryOptions, unitSuggestions] = await Promise.all([
+    listPantryItemsForPickers(),
+    listPantryUnitSuggestions(),
+  ]);
   return (
     <div className="space-y-6 pb-4">
       <div className="flex items-center gap-3">
@@ -19,7 +25,10 @@ export default async function NewRecipePage() {
       </div>
       <div className="panel-bordered border-2 p-5">
         <h2 className="mb-3 font-serif text-lg font-semibold text-[var(--accent)]">Manual entry</h2>
-        <RecipeNewForm pantryOptions={pantryOptions} />
+        <RecipeNewForm
+          pantryOptions={pantryOptions}
+          unitSuggestions={unitSuggestions}
+        />
       </div>
     </div>
   );

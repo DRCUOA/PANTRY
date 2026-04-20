@@ -4,6 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deletePantryItem, markPantryItemUsedUp, updatePantryItem } from "@/actions/pantry";
 import type { PantryItemDTO } from "@/components/PantryEditSheet";
+import {
+  ChipSelect,
+  DEFAULT_LOCATION_OPTIONS,
+  DEFAULT_UNIT_OPTIONS,
+  mergeChipOptions,
+} from "./ChipSelect";
+import { ExpiryQuickPicker } from "./ExpiryQuickPicker";
 import { IconCheck, IconTrash } from "./icons";
 import { SheetModal } from "./SheetModal";
 import { Stepper } from "./Stepper";
@@ -46,9 +53,11 @@ function toNumber(raw: string | null | undefined, fallback = 0) {
 export function PantryRow({
   item,
   locationSuggestions = [],
+  unitSuggestions = [],
 }: {
   item: PantryItemDTO;
   locationSuggestions?: string[];
+  unitSuggestions?: string[];
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -57,6 +66,33 @@ export function PantryRow({
     kind: "used" | "deleted";
     snapshot: PantryItemDTO;
   }>(null);
+
+  // Tap-first edit state. Seeded from `item` when the sheet opens.
+  const [editLocation, setEditLocation] = useState(item.location ?? "");
+  const [editUnit, setEditUnit] = useState(item.unit);
+  const [editExpiry, setEditExpiry] = useState(item.expirationDate ?? "");
+  const [editName, setEditName] = useState(item.name);
+  const [editQty, setEditQty] = useState<number>(toNumber(item.quantity));
+  const [editLowThreshold, setEditLowThreshold] = useState(
+    item.lowStockThreshold ?? "",
+  );
+
+  function openEdit() {
+    // Refresh sheet state from the current item whenever it re-opens.
+    setEditName(item.name);
+    setEditQty(toNumber(item.quantity));
+    setEditUnit(item.unit);
+    setEditLocation(item.location ?? "");
+    setEditExpiry(item.expirationDate ?? "");
+    setEditLowThreshold(item.lowStockThreshold ?? "");
+    setOpen(true);
+  }
+
+  const locationOptions = mergeChipOptions(
+    DEFAULT_LOCATION_OPTIONS,
+    locationSuggestions,
+  );
+  const unitOptions = mergeChipOptions(DEFAULT_UNIT_OPTIONS, unitSuggestions);
 
   const qty = toNumber(item.quantity);
   const lowThreshold = item.lowStockThreshold != null ? Number(item.lowStockThreshold) : null;
@@ -132,7 +168,7 @@ export function PantryRow({
         >
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={openEdit}
             className="min-w-0 flex-1 text-left"
             aria-label={`Edit ${item.name}`}
             data-no-swipe
@@ -205,7 +241,7 @@ export function PantryRow({
       >
         <form
           id={`pantry-edit-${item.id}`}
-          className="space-y-3"
+          className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
@@ -221,6 +257,14 @@ export function PantryRow({
           <input type="hidden" name="barcode" value={item.barcode ?? ""} />
           <input type="hidden" name="category" value={item.category ?? ""} />
           <input type="hidden" name="notes" value={item.notes ?? ""} />
+          <input type="hidden" name="quantity" value={String(editQty)} readOnly />
+          <input
+            type="hidden"
+            name="lowStockThreshold"
+            value={editLowThreshold}
+            readOnly
+          />
+
           <label className="block">
             <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
               Name
@@ -228,78 +272,87 @@ export function PantryRow({
             <input
               name="name"
               required
-              defaultValue={item.name}
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
               className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
             />
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            <label>
-              <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-                Quantity
-              </span>
-              <input
-                name="quantity"
-                required
-                inputMode="decimal"
-                defaultValue={item.quantity}
-                className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
+
+          <div>
+            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+              Quantity
+            </span>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] px-3 py-2">
+              <Stepper
+                value={editQty}
+                step={guessStep(editUnit)}
+                min={0}
+                unit={editUnit}
+                ariaLabel={`${item.name} quantity`}
+                onChange={setEditQty}
               />
-            </label>
-            <label>
-              <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-                Unit
-              </span>
-              <input
-                name="unit"
-                required
-                defaultValue={item.unit}
-                className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
-              />
-            </label>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <label>
-              <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-                Expiry
-              </span>
-              <input
-                name="expirationDate"
-                type="date"
-                defaultValue={item.expirationDate ?? ""}
-                className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
-              />
-            </label>
-            <label>
-              <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-                Low stock at
-              </span>
-              <input
-                name="lowStockThreshold"
-                inputMode="decimal"
-                defaultValue={item.lowStockThreshold ?? ""}
-                placeholder="e.g. 1"
-                className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
-              />
-            </label>
+
+          <div>
+            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+              Unit
+            </span>
+            <ChipSelect
+              name="unit"
+              options={unitOptions}
+              value={editUnit}
+              onChange={setEditUnit}
+              ariaLabel="Unit"
+              emptyLabel="—"
+            />
           </div>
-          <label className="block">
+
+          <div>
             <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
               Location
             </span>
-            <datalist id={`pantry-loc-${item.id}`}>
-              {locationSuggestions.map((loc) => (
-                <option key={loc} value={loc} />
-              ))}
-            </datalist>
-            <input
+            <ChipSelect
               name="location"
-              list={`pantry-loc-${item.id}`}
-              defaultValue={item.location ?? ""}
-              autoComplete="off"
-              placeholder="Pantry, Fridge, Freezer…"
-              className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
+              options={locationOptions}
+              value={editLocation}
+              onChange={setEditLocation}
+              ariaLabel="Location"
+              emptyLabel="Unsorted"
             />
-          </label>
+          </div>
+
+          <div>
+            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+              Expiry
+            </span>
+            <ExpiryQuickPicker
+              name="expirationDate"
+              value={editExpiry}
+              onChange={setEditExpiry}
+            />
+          </div>
+
+          <details className="rounded-xl border border-[var(--border)] bg-[var(--surface-inset)]">
+            <summary className="tap-target cursor-pointer select-none list-none px-3 text-sm font-medium text-[var(--muted)]">
+              More options
+            </summary>
+            <div className="px-3 pb-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+                  Low stock at
+                </span>
+                <input
+                  inputMode="decimal"
+                  value={editLowThreshold}
+                  onChange={(e) => setEditLowThreshold(e.target.value)}
+                  placeholder="e.g. 1"
+                  className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
+                />
+              </label>
+            </div>
+          </details>
+
           <button
             type="button"
             className="ui-btn ui-btn--ghost w-full"

@@ -302,10 +302,30 @@
   color: var(--accent);
 }
 
-.ui-chip[aria-pressed="true"] {
+.ui-chip[aria-pressed="true"],
+.ui-chip[aria-checked="true"],
+.ui-chip[data-active="true"] {
   background: var(--accent-subtle);
   border-color: var(--border-accent);
   color: var(--accent);
+}
+
+/* Compact chip variant (denser wrap, used in chip pickers) */
+.ui-chip--compact {
+  min-height: 38px;
+  padding: 0 0.7rem;
+  font-size: 0.82rem;
+}
+
+/* Tappable chip picker — always reserves tappable area, wraps on narrow screens */
+.ui-chip-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ui-chip-picker .ui-chip-row {
+  flex-wrap: wrap;
+  overflow-x: visible;
 }
 
 .ui-chip--count {

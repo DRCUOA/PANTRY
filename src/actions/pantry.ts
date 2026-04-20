@@ -243,6 +243,22 @@ export async function listPantryLocationSuggestions(): Promise<string[]> {
   return [...set].sort((a, b) => a.localeCompare(b));
 }
 
+/** Distinct non-empty units for chip pickers on entry forms. */
+export async function listPantryUnitSuggestions(): Promise<string[]> {
+  const userId = await requireUserId();
+  const db = getDb();
+  const rows = await db
+    .selectDistinct({ unit: pantryItems.unit })
+    .from(pantryItems)
+    .where(eq(pantryItems.userId, userId));
+  const set = new Set<string>();
+  for (const r of rows) {
+    const u = r.unit?.trim();
+    if (u) set.add(u);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
 export async function listPantryItems(search: string, filter: PantryFilter) {
   const userId = await requireUserId();
   const db = getDb();

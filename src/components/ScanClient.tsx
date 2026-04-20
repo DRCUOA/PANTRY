@@ -4,7 +4,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPantryItem } from "@/actions/pantry";
 import { InstructionIcon } from "@/components/InstructionIcon";
+import {
+  ChipSelect,
+  DEFAULT_LOCATION_OPTIONS,
+  DEFAULT_UNIT_OPTIONS,
+  mergeChipOptions,
+} from "@/components/ui/ChipSelect";
+import { ExpiryQuickPicker } from "@/components/ui/ExpiryQuickPicker";
 import { IconCheck } from "@/components/ui/icons";
+import { Stepper } from "@/components/ui/Stepper";
 
 type Tab = "scan" | "manual";
 
@@ -18,12 +26,28 @@ interface DetectedResult {
 const RESUME_SCAN_DELAY_MS = 420;
 const SAVED_FLASH_MS = 1600;
 
+/** Approximate "one bump" for the stepper based on the current unit. */
+function guessStep(unit: string): number {
+  const u = unit.trim().toLowerCase();
+  if (
+    ["each", "unit", "pc", "piece", "pack", "tin", "can", "box", "bottle", "jar"].some(
+      (x) => u.includes(x),
+    )
+  )
+    return 1;
+  if (["kg", "lb", "l"].some((x) => u === x)) return 0.1;
+  if (["g", "ml", "oz"].some((x) => u === x)) return 25;
+  return 1;
+}
+
 export function ScanClient({
   defaultLocation,
   locationSuggestions = [],
+  unitSuggestions = [],
 }: {
   defaultLocation: string;
   locationSuggestions?: string[];
+  unitSuggestions?: string[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("scan");
@@ -511,6 +535,8 @@ export function ScanClient({
           <input type="hidden" name="category" value="" />
           <input type="hidden" name="notes" value="" />
           <input type="hidden" name="lowStockThreshold" value="" />
+          <input type="hidden" name="quantity" value={quantity} readOnly />
+          <input type="hidden" name="expirationDate" value={expirationDate} readOnly />
 
           <div>
             <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
@@ -526,66 +552,65 @@ export function ScanClient({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-                Quantity
-              </label>
-              <input
-                name="quantity"
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
-                required
-                className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-                Unit
-              </label>
-              <input
-                name="unit"
-                value={unit}
-                onChange={(event) => setUnit(event.target.value)}
-                required
-                className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
+          <div>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+              Quantity
+            </label>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] px-3 py-2">
+              <Stepper
+                value={Number.isFinite(Number(quantity)) ? Number(quantity) : 0}
+                step={guessStep(unit)}
+                min={0}
+                unit={unit}
+                ariaLabel="Quantity"
+                onChange={(next) => setQuantity(String(next))}
               />
             </div>
           </div>
 
           <div>
             <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+              Unit
+            </label>
+            <ChipSelect
+              name="unit"
+              options={mergeChipOptions(DEFAULT_UNIT_OPTIONS, unitSuggestions)}
+              value={unit}
+              onChange={setUnit}
+              ariaLabel="Unit"
+              emptyLabel="—"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
               Location
             </label>
-            <datalist id="scan-location-suggestions">
-              {locationSuggestions.map((suggestion) => (
-                <option key={suggestion} value={suggestion} />
-              ))}
-            </datalist>
-            <input
+            <ChipSelect
               name="location"
-              list="scan-location-suggestions"
+              options={mergeChipOptions(
+                DEFAULT_LOCATION_OPTIONS,
+                locationSuggestions,
+              )}
               value={location}
-              onChange={(event) => setLocation(event.target.value)}
-              autoComplete="off"
-              className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
+              onChange={setLocation}
+              ariaLabel="Location"
+              emptyLabel="Unsorted"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+              Expiry
+            </label>
+            <ExpiryQuickPicker
+              value={expirationDate}
+              onChange={setExpirationDate}
             />
           </div>
 
           {showAdvanced && (
             <div className="space-y-3 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-inset)] p-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-                  Expiry
-                </label>
-                <input
-                  name="expirationDate"
-                  type="date"
-                  value={expirationDate}
-                  onChange={(event) => setExpirationDate(event.target.value)}
-                  className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
-                />
-              </div>
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
                   Barcode

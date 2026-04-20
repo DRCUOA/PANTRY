@@ -1,4 +1,9 @@
-import { listPantryItems, listPantryLocationSuggestions, type PantryFilter } from "@/actions/pantry";
+import {
+  listPantryItems,
+  listPantryLocationSuggestions,
+  listPantryUnitSuggestions,
+  type PantryFilter,
+} from "@/actions/pantry";
 import type { PantryItemDTO } from "@/components/PantryEditSheet";
 import { Aisle } from "@/components/ui/Aisle";
 import { ChipRow, Chip } from "@/components/ui/Chip";
@@ -40,8 +45,11 @@ export default async function PantryPage({
   const sp = await searchParams;
   const q = sp.q ?? "";
   const filter = FILTERS.some((f) => f.key === sp.filter) ? (sp.filter as PantryFilter) : "all";
-  const rows = await listPantryItems(q, filter);
-  const locationSuggestions = await listPantryLocationSuggestions();
+  const [rows, locationSuggestions, unitSuggestions] = await Promise.all([
+    listPantryItems(q, filter),
+    listPantryLocationSuggestions(),
+    listPantryUnitSuggestions(),
+  ]);
   const items = rows.map(toDto);
 
   const grouped = new Map<string, PantryItemDTO[]>();
@@ -121,7 +129,11 @@ export default async function PantryPage({
                 <ul className="space-y-2">
                   {sectionItems.map((item) => (
                     <li key={item.id}>
-                      <PantryRow item={item} locationSuggestions={locationSuggestions} />
+                      <PantryRow
+                        item={item}
+                        locationSuggestions={locationSuggestions}
+                        unitSuggestions={unitSuggestions}
+                      />
                     </li>
                   ))}
                 </ul>

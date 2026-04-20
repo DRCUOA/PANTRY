@@ -5,6 +5,13 @@ import { useState } from "react";
 import { createRecipe } from "@/actions/recipes";
 import type { PantryPickerRow } from "@/actions/pantry";
 import { RecipeMealTypePicker } from "@/components/RecipeMealTypePicker";
+import {
+  ChipSelect,
+  DEFAULT_UNIT_OPTIONS,
+  mergeChipOptions,
+} from "@/components/ui/ChipSelect";
+import { IconTrash } from "@/components/ui/icons";
+import { SwipeRow } from "@/components/ui/SwipeRow";
 import type { RecipeMealTypeValue } from "@/lib/recipe-meal-types";
 
 type Line = {
@@ -19,14 +26,25 @@ function emptyLine(): Line {
   return { pickId: "", customName: "", quantity: "", unit: "", optional: false };
 }
 
-export function RecipeNewForm({ pantryOptions }: { pantryOptions: PantryPickerRow[] }) {
+export function RecipeNewForm({
+  pantryOptions,
+  unitSuggestions = [],
+}: {
+  pantryOptions: PantryPickerRow[];
+  unitSuggestions?: string[];
+}) {
   const router = useRouter();
   const [lines, setLines] = useState<Line[]>([emptyLine()]);
   const [mealType, setMealType] = useState<RecipeMealTypeValue>("breakfast");
   const [pending, setPending] = useState(false);
+  const unitOptions = mergeChipOptions(DEFAULT_UNIT_OPTIONS, unitSuggestions);
 
   function addLine() {
     setLines((L) => [...L, emptyLine()]);
+  }
+
+  function removeLine(i: number) {
+    setLines((L) => (L.length > 1 ? L.filter((_, j) => j !== i) : L));
   }
 
   function setPick(i: number, idStr: string) {
@@ -137,25 +155,32 @@ export function RecipeNewForm({ pantryOptions }: { pantryOptions: PantryPickerRo
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="mb-1 block text-xs font-medium">Cal / serving</label>
-          <input
-            name="caloriesPerServing"
-            type="number"
-            min={0}
-            className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
-          />
+      <details className="rounded-xl border border-[var(--border)] bg-[var(--surface-inset)]">
+        <summary className="tap-target cursor-pointer select-none list-none px-3 text-sm font-medium text-[var(--muted)]">
+          Nutrition (optional)
+        </summary>
+        <div className="grid grid-cols-2 gap-2 p-3 pt-0">
+          <div>
+            <label className="mb-1 block text-xs font-medium">Cal / serving</label>
+            <input
+              name="caloriesPerServing"
+              type="number"
+              min={0}
+              inputMode="numeric"
+              className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium">Protein g / serving</label>
+            <input
+              name="proteinGPerServing"
+              type="text"
+              inputMode="decimal"
+              className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
+            />
+          </div>
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium">Protein g / serving</label>
-          <input
-            name="proteinGPerServing"
-            type="text"
-            className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
-          />
-        </div>
-      </div>
+      </details>
 
       <div>
         <div className="mb-2 flex items-center justify-between">
@@ -170,63 +195,109 @@ export function RecipeNewForm({ pantryOptions }: { pantryOptions: PantryPickerRo
         </div>
         <ul className="space-y-2">
           {lines.map((line, i) => (
-            <li key={i} className="receipt-card p-3">
-              <label className="mb-1 block text-xs font-medium text-[var(--muted)]">Pantry item</label>
-              <select
-                value={line.pickId}
-                onChange={(e) => setPick(i, e.target.value)}
-                className="input-touch mb-2 w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
+            <li key={i}>
+              <SwipeRow
+                rightAction={{
+                  label: "Remove",
+                  icon: <IconTrash size={16} />,
+                  onAction: () => removeLine(i),
+                }}
               >
-                <option value="">Select from pantry…</option>
-                {pantryOptions.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.quantity} {p.unit})
-                  </option>
-                ))}
-                <option value="custom">Other (not in pantry)…</option>
-              </select>
-              {(line.pickId === "custom" || (line.pickId === "" && pantryOptions.length === 0)) && (
-                <input
-                  placeholder="Ingredient name"
-                  value={line.customName}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setLines((L) => L.map((x, j) => (j === i ? { ...x, customName: v, pickId: "custom" } : x)));
-                  }}
-                  className="input-touch mb-2 w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted)]"
-                />
-              )}
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  placeholder="Qty"
-                  value={line.quantity}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setLines((L) => L.map((x, j) => (j === i ? { ...x, quantity: v } : x)));
-                  }}
-                  className="input-touch w-24 border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
-                />
-                <input
-                  placeholder="Unit"
-                  value={line.unit}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setLines((L) => L.map((x, j) => (j === i ? { ...x, unit: v } : x)));
-                  }}
-                  className="input-touch min-w-[6rem] flex-1 border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
-                />
-                <label className="flex items-center gap-1 text-xs text-[var(--muted)]">
-                  <input
-                    type="checkbox"
-                    checked={line.optional}
-                    onChange={(e) => {
-                      const v = e.target.checked;
-                      setLines((L) => L.map((x, j) => (j === i ? { ...x, optional: v } : x)));
-                    }}
-                  />
-                  Optional
-                </label>
-              </div>
+                <div className="receipt-card space-y-2 p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <label className="mb-1 block text-xs font-medium text-[var(--muted)]">
+                        Pantry item
+                      </label>
+                      <select
+                        value={line.pickId}
+                        onChange={(e) => setPick(i, e.target.value)}
+                        className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
+                        data-no-swipe
+                      >
+                        <option value="">Select from pantry…</option>
+                        {pantryOptions.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.quantity} {p.unit})
+                          </option>
+                        ))}
+                        <option value="custom">Other (not in pantry)…</option>
+                      </select>
+                    </div>
+                    {lines.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeLine(i)}
+                        aria-label="Remove ingredient"
+                        className="tap-target mt-5 shrink-0 rounded-lg border border-[var(--border)] text-[var(--muted)] active:bg-[var(--surface-inset)]"
+                        data-no-swipe
+                      >
+                        <IconTrash size={18} />
+                      </button>
+                    )}
+                  </div>
+                  {(line.pickId === "custom" ||
+                    (line.pickId === "" && pantryOptions.length === 0)) && (
+                    <input
+                      placeholder="Ingredient name"
+                      value={line.customName}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setLines((L) =>
+                          L.map((x, j) =>
+                            j === i ? { ...x, customName: v, pickId: "custom" } : x,
+                          ),
+                        );
+                      }}
+                      className="input-touch w-full border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted)]"
+                      data-no-swipe
+                    />
+                  )}
+                  <div className="flex items-center gap-2" data-no-swipe>
+                    <input
+                      placeholder="Qty"
+                      inputMode="decimal"
+                      value={line.quantity}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setLines((L) =>
+                          L.map((x, j) => (j === i ? { ...x, quantity: v } : x)),
+                        );
+                      }}
+                      className="input-touch w-20 border border-[var(--border-strong)] bg-[var(--background)] text-[var(--foreground)]"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <ChipSelect
+                        options={unitOptions}
+                        value={line.unit}
+                        onChange={(v) =>
+                          setLines((L) =>
+                            L.map((x, j) => (j === i ? { ...x, unit: v } : x)),
+                          )
+                        }
+                        ariaLabel="Unit"
+                        emptyLabel="—"
+                      />
+                    </div>
+                  </div>
+                  <label
+                    className="flex items-center gap-2 text-xs text-[var(--muted)]"
+                    data-no-swipe
+                  >
+                    <input
+                      type="checkbox"
+                      checked={line.optional}
+                      onChange={(e) => {
+                        const v = e.target.checked;
+                        setLines((L) =>
+                          L.map((x, j) => (j === i ? { ...x, optional: v } : x)),
+                        );
+                      }}
+                    />
+                    Optional ingredient
+                  </label>
+                </div>
+              </SwipeRow>
             </li>
           ))}
         </ul>

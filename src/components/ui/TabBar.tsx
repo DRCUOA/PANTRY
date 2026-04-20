@@ -34,7 +34,15 @@ const RIGHT_TABS = [
  * Bottom nav with integrated center FAB.
  * 5-slot layout: 2 tabs | raised FAB | 2 tabs
  */
-export function TabBar() {
+export function TabBar({
+  locationSuggestions = [],
+  unitSuggestions = [],
+  defaultLocation = "",
+}: {
+  locationSuggestions?: string[];
+  unitSuggestions?: string[];
+  defaultLocation?: string;
+} = {}) {
   const pathname = usePathname() ?? "/";
   return (
     <nav
@@ -65,7 +73,11 @@ export function TabBar() {
 
         {/* Center FAB slot */}
         <div className="flex items-center justify-center">
-          <QuickAdd />
+          <QuickAdd
+            locationSuggestions={locationSuggestions}
+            unitSuggestions={unitSuggestions}
+            defaultLocation={defaultLocation}
+          />
         </div>
 
         {RIGHT_TABS.map((t) => {

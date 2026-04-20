@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import { pantryItems, shoppingListItems } from "@/db/schema";
@@ -64,6 +64,33 @@ async function createShoppingItem(userId: number, payload: AddShoppingItemDto): 
 export async function listShoppingItems() {
   const userId = await requireUserId();
   return listShoppingItemsReadModel(userId);
+}
+
+/**
+ * Most-recently-seen item names, de-duped. Used to surface "tap to re-add"
+ * chips above the shopping add form.
+ */
+export async function listRecentShoppingNames(limit = 12): Promise<string[]> {
+  const userId = await requireUserId();
+  const db = getDb();
+  const rows = await db
+    .select({ name: shoppingListItems.name })
+    .from(shoppingListItems)
+    .where(eq(shoppingListItems.userId, userId))
+    .orderBy(desc(shoppingListItems.createdAt))
+    .limit(60);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const r of rows) {
+    const n = r.name.trim();
+    if (!n) continue;
+    const key = n.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(n);
+    if (out.length >= limit) break;
+  }
+  return out;
 }
 
 export async function addShoppingItem(formData: FormData): Promise<ActionResult> {

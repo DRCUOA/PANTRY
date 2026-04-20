@@ -4,16 +4,55 @@ import Link from "next/link";
 import { useState } from "react";
 import { addShoppingItem } from "@/actions/shopping";
 import { createPantryItem } from "@/actions/pantry";
+import {
+  ChipSelect,
+  DEFAULT_LOCATION_OPTIONS,
+  DEFAULT_UNIT_OPTIONS,
+  mergeChipOptions,
+} from "./ChipSelect";
+import { ExpiryQuickPicker } from "./ExpiryQuickPicker";
 import { IconBarcode, IconKeyboard, IconShop } from "./icons";
 import { SheetModal } from "./SheetModal";
+import { Stepper } from "./Stepper";
 
 /**
  * Center FAB: rounded-square basket icon that opens the quick-add sheet.
  * Designed to sit in the center slot of the TabBar grid.
  */
-export function QuickAdd() {
+export function QuickAdd({
+  locationSuggestions = [],
+  unitSuggestions = [],
+  defaultLocation = "",
+}: {
+  locationSuggestions?: string[];
+  unitSuggestions?: string[];
+  defaultLocation?: string;
+} = {}) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"root" | "type" | "shop">("root");
+  // Pantry quick-add state (controlled so chip pickers can drive it).
+  const [pLocation, setPLocation] = useState(defaultLocation);
+  const [pUnit, setPUnit] = useState("each");
+  const [pQty, setPQty] = useState(1);
+  const [pExpiry, setPExpiry] = useState("");
+  // Shopping quick-add state.
+  const [sUnit, setSUnit] = useState("");
+  const [sQty, setSQty] = useState("");
+
+  const locationOptions = mergeChipOptions(
+    DEFAULT_LOCATION_OPTIONS,
+    locationSuggestions,
+  );
+  const unitOptions = mergeChipOptions(DEFAULT_UNIT_OPTIONS, unitSuggestions);
+
+  function resetQuickForms() {
+    setPLocation(defaultLocation);
+    setPUnit("each");
+    setPQty(1);
+    setPExpiry("");
+    setSUnit("");
+    setSQty("");
+  }
 
   return (
     <>
@@ -100,10 +139,19 @@ export function QuickAdd() {
           <form
             action={async (fd: FormData) => {
               await createPantryItem(fd);
+              resetQuickForms();
               setOpen(false);
             }}
-            className="space-y-3"
+            className="space-y-4"
           >
+            <input type="hidden" name="category" value="" />
+            <input type="hidden" name="quantity" value={String(pQty)} readOnly />
+            <input
+              type="hidden"
+              name="expirationDate"
+              value={pExpiry}
+              readOnly
+            />
             <input
               name="name"
               required
@@ -111,33 +159,54 @@ export function QuickAdd() {
               placeholder="Item name (e.g. Black beans)"
               className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
             />
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                name="quantity"
-                required
-                inputMode="decimal"
-                defaultValue="1"
-                className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
-                aria-label="Quantity"
-              />
-              <input
+            <div>
+              <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+                Quantity
+              </span>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] px-3 py-2">
+                <Stepper
+                  value={pQty}
+                  step={pUnit === "g" || pUnit === "ml" ? 25 : 1}
+                  min={0}
+                  unit={pUnit}
+                  onChange={setPQty}
+                  ariaLabel="Quantity"
+                />
+              </div>
+            </div>
+            <div>
+              <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+                Unit
+              </span>
+              <ChipSelect
                 name="unit"
-                required
-                defaultValue="each"
-                className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
-                aria-label="Unit"
+                options={unitOptions}
+                value={pUnit}
+                onChange={setPUnit}
+                ariaLabel="Unit"
               />
             </div>
-            <input
-              name="category"
-              placeholder="Category (optional)"
-              className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
-            />
-            <input
-              name="location"
-              placeholder="Location (pantry / fridge / freezer)"
-              className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
-            />
+            <div>
+              <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+                Location
+              </span>
+              <ChipSelect
+                name="location"
+                options={locationOptions}
+                value={pLocation}
+                onChange={setPLocation}
+                ariaLabel="Location"
+                emptyLabel="Unsorted"
+              />
+            </div>
+            <details className="rounded-xl border border-[var(--border)] bg-[var(--surface-inset)]">
+              <summary className="tap-target cursor-pointer select-none list-none px-3 text-sm font-medium text-[var(--muted)]">
+                Set expiry
+              </summary>
+              <div className="px-3 pb-3">
+                <ExpiryQuickPicker value={pExpiry} onChange={setPExpiry} />
+              </div>
+            </details>
             <div className="flex gap-2 pt-2">
               <button
                 type="button"
@@ -156,10 +225,12 @@ export function QuickAdd() {
           <form
             action={async (fd: FormData) => {
               await addShoppingItem(fd);
+              resetQuickForms();
               setOpen(false);
             }}
-            className="space-y-3"
+            className="space-y-4"
           >
+            <input type="hidden" name="quantity" value={sQty} readOnly />
             <input
               name="name"
               required
@@ -167,20 +238,25 @@ export function QuickAdd() {
               placeholder="Item (e.g. Milk)"
               className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
             />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
               <input
-                name="quantity"
                 inputMode="decimal"
+                value={sQty}
+                onChange={(e) => setSQty(e.target.value)}
                 placeholder="Qty (optional)"
-                className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
+                className="input-touch w-24 rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
                 aria-label="Quantity"
               />
-              <input
-                name="unit"
-                placeholder="Unit (optional)"
-                className="input-touch w-full rounded-lg border border-[var(--border-strong)] bg-[var(--background)]"
-                aria-label="Unit"
-              />
+              <div className="min-w-0 flex-1">
+                <ChipSelect
+                  name="unit"
+                  options={unitOptions}
+                  value={sUnit}
+                  onChange={setSUnit}
+                  ariaLabel="Unit"
+                  emptyLabel="No unit"
+                />
+              </div>
             </div>
             <div className="flex gap-2 pt-2">
               <button
