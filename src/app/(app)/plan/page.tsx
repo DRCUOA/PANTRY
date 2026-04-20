@@ -18,7 +18,7 @@ import { recipePantryStatus } from "@/lib/recipe-score";
 import { isoDateInZone, resolveTimezone } from "@/lib/timezone";
 import { addDaysIso, mondayOfDate, weekRangeMondayOffset } from "@/lib/week";
 
-const MEALS = ["breakfast", "lunch", "dinner"] as const;
+const MEALS = ["breakfast", "lunch", "dinner", "snack"] as const;
 
 function parseIsoOr(raw: string | undefined, fallback: string): string {
   if (raw && /^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
@@ -147,6 +147,7 @@ export default async function PlanPage({
       <section className="space-y-3">
         {MEALS.map((mealType) => {
           const entriesForSlot = selectedMeals.filter((m) => m.mealType === mealType);
+          const slotRecipes = recipes.filter((r) => r.mealType === mealType);
           return (
             <div key={mealType}>
               <div className="ui-section-title">
@@ -163,12 +164,84 @@ export default async function PlanPage({
                     await addMealPlanEntry(fd);
                   }}
                 >
-                  <button
-                    type="submit"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--surface)] px-3 py-3 text-sm text-[var(--muted)] active:bg-[var(--surface-inset)]"
-                  >
-                    <IconPlus size={16} /> Add {mealType}
-                  </button>
+                  <details className="group rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--surface)]">
+                    <summary className="tap-target flex cursor-pointer list-none items-center justify-center gap-2 px-3 py-3 text-sm text-[var(--muted)] active:bg-[var(--surface-inset)] group-open:border-b group-open:border-solid group-open:border-[var(--border)]">
+                      <IconPlus size={16} />
+                      <span className="capitalize">Add {mealType}</span>
+                    </summary>
+                    <div className="p-2">
+                      {slotRecipes.length === 0 ? (
+                        <div className="px-2 pb-2 pt-1 text-sm text-[var(--muted)]">
+                          <p className="mb-2">
+                            No {mealType} recipes yet.
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <Link
+                              href="/recipes/new"
+                              className="ui-btn ui-btn--ghost text-sm"
+                            >
+                              New recipe
+                            </Link>
+                            <button
+                              type="submit"
+                              name="recipeId"
+                              value="none"
+                              className="ui-btn ui-btn--ghost text-sm"
+                            >
+                              Add without a recipe
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <ul className="space-y-1">
+                          {slotRecipes.map((r) => {
+                            const total = r.ingredients.length;
+                            const { matchedCount } =
+                              total > 0
+                                ? recipePantryStatus(
+                                    {
+                                      id: r.id,
+                                      title: r.title,
+                                      ingredients: r.ingredients.map((i) => ({
+                                        pantryItemName: i.pantryItemName,
+                                        optional: i.optional,
+                                      })),
+                                    },
+                                    pantryRows,
+                                  )
+                                : { matchedCount: 0 };
+                            return (
+                              <li key={r.id}>
+                                <button
+                                  type="submit"
+                                  name="recipeId"
+                                  value={String(r.id)}
+                                  className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left active:bg-[var(--surface-inset)]"
+                                >
+                                  <span className="min-w-0 truncate font-medium text-[var(--foreground)]">
+                                    {r.title}
+                                  </span>
+                                  <span className="shrink-0 text-xs text-[var(--muted)]">
+                                    {total > 0 ? `${matchedCount}/${total} in pantry` : "Recipe"}
+                                  </span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                          <li className="border-t border-dashed border-[var(--border)] pt-1">
+                            <button
+                              type="submit"
+                              name="recipeId"
+                              value="none"
+                              className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--muted)] active:bg-[var(--surface-inset)]"
+                            >
+                              Add without a recipe
+                            </button>
+                          </li>
+                        </ul>
+                      )}
+                    </div>
+                  </details>
                 </form>
               ) : (
                 <ul className="space-y-2">

@@ -33,7 +33,7 @@ const optionalFormIdSchema = z.preprocess(
 
 export const mealPlanFormSchema = z.object({
   plannedDate: isoDateSchema,
-  mealType: z.enum(["breakfast", "lunch", "dinner"]),
+  mealType: z.enum(["breakfast", "lunch", "dinner", "snack"]),
   servings: z.coerce.number().positive(),
   notes: z.preprocess(
     (value) => {
