@@ -11,8 +11,20 @@ import {
   date,
   index,
   uniqueIndex,
+  customType,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+
+/**
+ * Postgres `bytea` column. Stored and returned as a Node Buffer — matches what
+ * postgres-js gives us for raw binary columns, so we can pipe the bytes
+ * straight to the browser from the avatar route handler.
+ */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
 
 export const users = pgTable("users", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
@@ -47,8 +59,30 @@ export const userSettings = pgTable("user_settings", {
     .references(() => users.id, { onDelete: "cascade" }),
   dailyCalories: integer("daily_calories"),
   dailyProteinG: integer("daily_protein_g"),
+  /** Legacy free-text dietary field — kept for backwards compat; new UI uses the structured columns below. */
   dietaryPreferences: text("dietary_preferences"),
   defaultLocation: varchar("default_location", { length: 100 }),
+  /** IANA timezone name (e.g. "America/Los_Angeles"). Null means "use the browser's detected zone". */
+  timezone: varchar("timezone", { length: 100 }),
+  /**
+   * Avatar image bytes stored directly in Postgres (NOT on disk — Railway's
+   * filesystem is ephemeral). Capped at 5MB upstream before ever reaching here.
+   */
+  avatarImage: bytea("avatar_image"),
+  avatarMime: varchar("avatar_mime", { length: 50 }),
+  avatarUpdatedAt: timestamp("avatar_updated_at", { mode: "date" }),
+  /** Positive tags: vegetarian, vegan, gluten-free, etc. */
+  foodPreferences: text("food_preferences")
+    .array()
+    .notNull()
+    .default([]),
+  /** Negative tags / intolerances / allergies: peanuts, shellfish, dairy, etc. */
+  foodIntolerances: text("food_intolerances")
+    .array()
+    .notNull()
+    .default([]),
+  /** Free-text clarification for anything that doesn't fit the preset chips. */
+  foodNotes: text("food_notes"),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });

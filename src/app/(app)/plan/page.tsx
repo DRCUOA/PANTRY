@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { addMealPlanEntry, listMealPlanRange } from "@/actions/meal-plan";
 import { listPantryItemsForPickers } from "@/actions/pantry";
 import { listRecipes } from "@/actions/recipes";
+import { getUserSettings } from "@/actions/settings";
 import { PlanMealTile } from "@/components/PlanMealTile";
 import { SundayResetButton } from "@/components/SundayResetButton";
 import { Chip, ChipRow } from "@/components/ui/Chip";
@@ -14,13 +15,14 @@ import { pantryItems } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 import { toPlanRecipeDetail } from "@/lib/plan-recipe";
 import { recipePantryStatus } from "@/lib/recipe-score";
-import { addDaysIso, mondayOfDate, toIsoDate, weekRangeMondayOffset } from "@/lib/week";
+import { isoDateInZone, resolveTimezone } from "@/lib/timezone";
+import { addDaysIso, mondayOfDate, weekRangeMondayOffset } from "@/lib/week";
 
 const MEALS = ["breakfast", "lunch", "dinner"] as const;
 
-function parseIsoOrToday(raw: string | undefined): string {
+function parseIsoOr(raw: string | undefined, fallback: string): string {
   if (raw && /^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  return toIsoDate(new Date());
+  return fallback;
 }
 
 function dayLabel(iso: string): { weekday: string; dateNum: number; long: string } {
@@ -43,12 +45,14 @@ export default async function PlanPage({
   searchParams: Promise<{ day?: string; panel?: string }>;
 }) {
   const sp = await searchParams;
-  const selectedIso = parseIsoOrToday(sp.day);
+  const settings = await getUserSettings();
+  const tz = await resolveTimezone(settings?.timezone);
+  const todayIso = isoDateInZone(new Date(), tz);
+  const selectedIso = parseIsoOr(sp.day, todayIso);
   const [sy, sm, sd] = selectedIso.split("-").map(Number);
   const selectedDate = new Date(sy!, sm! - 1, sd!);
   const weekStart = mondayOfDate(selectedDate);
   const weekEnd = addDaysIso(weekStart, 6);
-  const todayIso = toIsoDate(new Date());
 
   const meals = await listMealPlanRange(weekStart, weekEnd);
   const recipes = await listRecipes();

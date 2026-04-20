@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { getHomeSnapshot } from "@/actions/home";
+import { getUserSettings } from "@/actions/settings";
 import { listShoppingItems } from "@/actions/shopping";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   IconChevronRight,
-  IconClock,
   IconFire,
 } from "@/components/ui/icons";
+import { hourInZone, isoDateInZone, resolveTimezone } from "@/lib/timezone";
 
-function greeting(now: Date) {
-  const h = now.getHours();
+function greetingForHour(h: number) {
   if (h < 5) return "Good night";
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
@@ -17,14 +17,14 @@ function greeting(now: Date) {
   return "Good night";
 }
 
-function daysUntilIso(iso: string | null): number | null {
+function daysUntilIso(iso: string | null, todayIso: string): number | null {
   if (!iso) return null;
+  const [ty, tm, td] = todayIso.split("-").map(Number);
   const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return null;
-  const target = new Date(y, m - 1, d);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.round((target.getTime() - today.getTime()) / 86400000);
+  if (!y || !m || !d || !ty || !tm || !td) return null;
+  const target = Date.UTC(y, m - 1, d);
+  const today = Date.UTC(ty, tm - 1, td);
+  return Math.round((target - today) / 86400000);
 }
 
 function mealTimeLabel(mealType: string) {
@@ -32,19 +32,24 @@ function mealTimeLabel(mealType: string) {
 }
 
 export default async function HomePage() {
-  const snap = await getHomeSnapshot();
-  const shopping = await listShoppingItems();
+  const [snap, shopping, settings] = await Promise.all([
+    getHomeSnapshot(),
+    listShoppingItems(),
+    getUserSettings(),
+  ]);
   const remaining = shopping.filter((s) => s.status === "needed");
 
+  const tz = await resolveTimezone(settings?.timezone);
   const now = new Date();
-  const dateLabel = now.toLocaleDateString(undefined, {
+  const todayIso = isoDateInZone(now, tz);
+  const dateLabel = new Intl.DateTimeFormat(undefined, {
+    timeZone: tz,
     weekday: "long",
     month: "short",
     day: "numeric",
-  });
+  }).format(now);
 
   const nextMeal = snap.nextMeal;
-  const todayIso = now.toISOString().slice(0, 10);
   const nextMealIsToday = nextMeal?.plannedDate === todayIso;
 
   const pinnedRecipes = snap.cookIdeas.slice(0, 4);
@@ -52,7 +57,7 @@ export default async function HomePage() {
     .slice(0, 4)
     .map((item) => ({
       ...item,
-      days: daysUntilIso(item.expirationDate),
+      days: daysUntilIso(item.expirationDate, todayIso),
     }))
     .filter((item) => item.days != null);
 
@@ -62,7 +67,7 @@ export default async function HomePage() {
       <header>
         <p className="text-sm text-[var(--muted)]">{dateLabel}</p>
         <h1 className="font-serif text-3xl font-semibold tracking-tight">
-          {greeting(now)}
+          {greetingForHour(hourInZone(now, tz))}
         </h1>
       </header>
 

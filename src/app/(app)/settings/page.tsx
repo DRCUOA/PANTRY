@@ -1,11 +1,17 @@
 import { logoutAction } from "@/actions/auth";
 import { listPantryLocationSuggestions } from "@/actions/pantry";
-import { getUserSettings, updateSettings } from "@/actions/settings";
+import { getUserProfileLite, getUserSettings, updateSettings } from "@/actions/settings";
+import { ProfileForm } from "@/components/ProfileForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { listTimezones } from "@/lib/timezone";
 
 export default async function SettingsPage() {
-  const s = await getUserSettings();
-  const locationSuggestions = await listPantryLocationSuggestions();
+  const [s, profile, locationSuggestions] = await Promise.all([
+    getUserSettings(),
+    getUserProfileLite(),
+    listPantryLocationSuggestions(),
+  ]);
+  const allTimezones = listTimezones();
 
   return (
     <div className="space-y-5 pb-4">
@@ -22,6 +28,8 @@ export default async function SettingsPage() {
           <ThemeToggle />
         </div>
       </section>
+
+      {profile && <ProfileForm profile={profile} allTimezones={allTimezones} />}
 
       <form action={updateSettings} className="ui-card space-y-4 p-4">
         <p className="font-semibold">Nutrition goals</p>
@@ -51,18 +59,6 @@ export default async function SettingsPage() {
             />
           </label>
         </div>
-        <label className="block">
-          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-            Dietary preferences
-          </span>
-          <textarea
-            name="dietaryPreferences"
-            rows={3}
-            defaultValue={s?.dietaryPreferences ?? ""}
-            placeholder="e.g. vegetarian, low sodium"
-            className="input-touch min-h-[100px] w-full resize-y rounded-lg border border-[var(--border-strong)] bg-[var(--background)] placeholder:text-[var(--muted)]"
-          />
-        </label>
         <label className="block">
           <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
             Default location for new items
