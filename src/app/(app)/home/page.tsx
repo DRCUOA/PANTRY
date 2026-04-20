@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { getCurrentUser } from "@/actions/auth";
 import { getHomeSnapshot } from "@/actions/home";
 import { getUserSettings } from "@/actions/settings";
 import { listShoppingItems } from "@/actions/shopping";
+import { UserAvatar } from "@/components/UserAvatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   IconChevronRight,
@@ -32,10 +34,11 @@ function mealTimeLabel(mealType: string) {
 }
 
 export default async function HomePage() {
-  const [snap, shopping, settings] = await Promise.all([
+  const [snap, shopping, settings, user] = await Promise.all([
     getHomeSnapshot(),
     listShoppingItems(),
     getUserSettings(),
+    getCurrentUser(),
   ]);
   const remaining = shopping.filter((s) => s.status === "needed");
 
@@ -64,11 +67,25 @@ export default async function HomePage() {
   return (
     <div className="space-y-5 pb-4">
       {/* Greeting */}
-      <header>
-        <p className="text-sm text-[var(--muted)]">{dateLabel}</p>
-        <h1 className="font-serif text-3xl font-semibold tracking-tight">
-          {greetingForHour(hourInZone(now, tz))}
-        </h1>
+      <header className="flex items-center gap-3">
+        <UserAvatar
+          info={{
+            version: settings?.avatarUpdatedAt ? settings.avatarUpdatedAt.getTime() : null,
+            hasImage: !!settings?.avatarMime,
+            name: user?.name ?? null,
+            email: user?.email ?? null,
+          }}
+          size={52}
+          href="/settings"
+          linkLabel="Open settings"
+        />
+        <div className="min-w-0">
+          <p className="text-sm text-[var(--muted)]">{dateLabel}</p>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight">
+            {greetingForHour(hourInZone(now, tz))}
+            {user?.name ? `, ${user.name.split(/\s+/)[0]}` : ""}
+          </h1>
+        </div>
       </header>
 
       {/* Next meal — compact card */}

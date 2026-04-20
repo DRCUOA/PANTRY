@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/actions/auth";
 import {
   listPantryLocationSuggestions,
   listPantryUnitSuggestions,
@@ -7,7 +8,7 @@ import {
 import { getUserSettings } from "@/actions/settings";
 import { getSession } from "@/lib/get-session";
 import { BrowserTimezoneSync } from "@/components/BrowserTimezoneSync";
-import { IconSettings } from "@/components/ui/icons";
+import { UserAvatar } from "@/components/UserAvatar";
 import { TabBar } from "@/components/ui/TabBar";
 
 export default async function AppShellLayout({ children }: { children: React.ReactNode }) {
@@ -18,10 +19,11 @@ export default async function AppShellLayout({ children }: { children: React.Rea
 
   // The FAB (QuickAdd) lives in the shell, so surface the user's common
   // locations and units here — chip pickers need them to feel personal.
-  const [locationSuggestions, unitSuggestions, settings] = await Promise.all([
+  const [locationSuggestions, unitSuggestions, settings, user] = await Promise.all([
     listPantryLocationSuggestions(),
     listPantryUnitSuggestions(),
     getUserSettings(),
+    getCurrentUser(),
   ]);
   const defaultLocation = settings?.defaultLocation ?? "";
 
@@ -32,13 +34,17 @@ export default async function AppShellLayout({ children }: { children: React.Rea
         <Link href="/home" className="font-serif text-sm font-semibold tracking-tight text-[var(--foreground)]">
           Pantry
         </Link>
-        <Link
+        <UserAvatar
+          info={{
+            version: settings?.avatarUpdatedAt ? settings.avatarUpdatedAt.getTime() : null,
+            hasImage: !!settings?.avatarMime,
+            name: user?.name ?? null,
+            email: user?.email ?? null,
+          }}
+          size={36}
           href="/settings"
-          className="tap-target rounded-full p-2 text-[var(--muted)]"
-          aria-label="Settings"
-        >
-          <IconSettings size={20} />
-        </Link>
+          linkLabel="Open settings"
+        />
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-4 md:max-w-3xl md:px-6">
         {children}

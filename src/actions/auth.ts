@@ -82,3 +82,23 @@ export async function logoutAction(): Promise<void> {
   session.destroy();
   redirect("/login");
 }
+
+/**
+ * Lightweight fetch of the current user's display info (id, name, email) for
+ * use in the header / greeting / avatar. Returns `null` when no valid session.
+ */
+export async function getCurrentUser(): Promise<{
+  id: number;
+  name: string | null;
+  email: string;
+} | null> {
+  const session = await getSession();
+  if (!session.isLoggedIn || session.userId == null) return null;
+  const db = getDb();
+  const rows = await db
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
+  return rows[0] ?? null;
+}
