@@ -3,6 +3,7 @@ import {
   listPantryItemsForPickers,
   listPantryUnitSuggestions,
 } from "@/actions/pantry";
+import { BatchRecipeImportWizard } from "@/components/BatchRecipeImportWizard";
 import { RecipeImportWizard } from "@/components/RecipeImportWizard";
 import { RecipeNewForm } from "@/components/RecipeNewForm";
 
@@ -22,6 +23,10 @@ export default async function NewRecipePage() {
       <div className="panel-bordered border-2 p-5">
         <h2 className="mb-3 font-serif text-lg font-semibold text-[var(--accent)]">Import from file</h2>
         <RecipeImportWizard />
+      </div>
+      <div className="panel-bordered border-2 p-5">
+        <h2 className="mb-3 font-serif text-lg font-semibold text-[var(--accent)]">Batch import</h2>
+        <BatchRecipeImportWizard />
       </div>
       <div className="panel-bordered border-2 p-5">
         <h2 className="mb-3 font-serif text-lg font-semibold text-[var(--accent)]">Manual entry</h2>

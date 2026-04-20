@@ -25,6 +25,18 @@ import {
   type ImportDraft,
   type PreAnalyzeResult,
 } from "@/lib/recipe-import";
+import {
+  annotateBatchItems,
+  canAutoMapCsv,
+  parseRecipeCsvBatch,
+  parseRecipeJsonBatch,
+  validateBatchImportSize,
+  type BatchCommitOutcome,
+  type BatchCommitResult,
+  type BatchItemFailure,
+  type BatchItemSuccess,
+  type BatchPreAnalyzeResult,
+} from "@/lib/recipe-import-batch";
 
 async function requireUserId(): Promise<number> {
   const session = await getSession();
@@ -246,5 +258,255 @@ export async function commitRecipeImport(formData: FormData) {
     return createRecipeFromImport(base.data, ingZ.data, mealType);
   } catch {
     return { ok: false as const, error: "Unauthorized" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Batch import
+// ---------------------------------------------------------------------------
+
+async function readBatchUploadFile(
+  formData: FormData,
+): Promise<{ ok: true; text: string; filename: string } | { ok: false; error: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File)) {
+    return { ok: false, error: "Missing file" };
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    return { ok: false, error: "File is too large for batch import (max 2 MB)" };
+  }
+  const text = await file.text();
+  const sizeErr = validateBatchImportSize(text);
+  if (sizeErr) return { ok: false, error: sizeErr };
+  return { ok: true, text, filename: file.name || "upload" };
+}
+
+export async function preAnalyzeRecipeBatch(formData: FormData): Promise<BatchPreAnalyzeResult> {
+  try {
+    const userId = await requireUserId();
+    const up = await readBatchUploadFile(formData);
+    if (!up.ok) return { ok: false, error: up.error };
+    const { pantryRows, validIds } = await loadPantryForImport(userId);
+    const fmt = sniffFormat(up.filename, up.text);
+
+    if (fmt === "json") {
+      try {
+        const { items, errors, warnings } = parseRecipeJsonBatch(up.text);
+        const annotated = annotateBatchItems(items, pantryRows, validIds);
+        return {
+          ok: true,
+          phase: "resolve",
+          format: "json",
+          items: annotated,
+          errors,
+          warnings,
+        };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Could not read JSON";
+        return { ok: false, error: msg };
+      }
+    }
+
+    // CSV
+    try {
+      const { headers, rows } = parseCsv(up.text);
+      if (headers.length === 0) return { ok: false, error: "CSV has no headers" };
+      if (rows.length === 0) return { ok: false, error: "CSV has no data rows" };
+      const auto = canAutoMapCsv(headers);
+      if (!auto.ok) {
+        return {
+          ok: true,
+          phase: "csv_map",
+          format: "csv",
+          headers,
+          previewRows: rows.slice(0, 8),
+          dataRowCount: rows.length,
+          suggestedColumnMap: auto.map,
+          warnings: ["Could not detect title and/or ingredients columns; map them below."],
+        };
+      }
+      const { items, errors, warnings } = parseRecipeCsvBatch(up.text, auto.map);
+      const annotated = annotateBatchItems(items, pantryRows, validIds);
+      return {
+        ok: true,
+        phase: "resolve",
+        format: "csv",
+        items: annotated,
+        errors,
+        warnings,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not read CSV";
+      return { ok: false, error: msg };
+    }
+  } catch {
+    return { ok: false, error: "Unauthorized" };
+  }
+}
+
+export async function applyRecipeBatchCsvColumnMap(
+  formData: FormData,
+): Promise<
+  | { ok: true; items: BatchItemSuccess[]; errors: BatchItemFailure[]; warnings: string[] }
+  | { ok: false; error: string }
+> {
+  try {
+    const userId = await requireUserId();
+    const up = await readBatchUploadFile(formData);
+    if (!up.ok) return { ok: false, error: up.error };
+    const mapRaw = formData.get("columnMap");
+    if (typeof mapRaw !== "string" || !mapRaw.trim()) {
+      return { ok: false, error: "Missing column map" };
+    }
+    let columnMap: ColumnMapAnswers;
+    try {
+      columnMap = JSON.parse(mapRaw) as ColumnMapAnswers;
+    } catch {
+      return { ok: false, error: "Invalid column map JSON" };
+    }
+    const { pantryRows, validIds } = await loadPantryForImport(userId);
+    try {
+      const { items, errors, warnings } = parseRecipeCsvBatch(up.text, columnMap);
+      const annotated = annotateBatchItems(items, pantryRows, validIds);
+      return { ok: true, items: annotated, errors, warnings };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not build recipes from CSV";
+      return { ok: false, error: msg };
+    }
+  } catch {
+    return { ok: false, error: "Unauthorized" };
+  }
+}
+
+const batchCommitItemSchema = z.object({
+  sourceIndex: z.number().int().min(0),
+  sourceLabel: z.string(),
+  draft: importDraftSchema,
+  answers: z.record(z.string(), z.string()).optional().default({}),
+});
+
+const batchCommitPayloadSchema = z.object({
+  items: z.array(batchCommitItemSchema),
+});
+
+export async function commitRecipeBatchImport(formData: FormData): Promise<BatchCommitResult> {
+  try {
+    const userId = await requireUserId();
+    const payloadRaw = formData.get("payloadJson");
+    if (typeof payloadRaw !== "string" || !payloadRaw.trim()) {
+      return { ok: false, error: "Missing payload" };
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(payloadRaw);
+    } catch {
+      return { ok: false, error: "Invalid payload JSON" };
+    }
+    const payload = batchCommitPayloadSchema.safeParse(parsed);
+    if (!payload.success) {
+      return { ok: false, error: payload.error.issues[0]?.message ?? "Invalid payload" };
+    }
+    if (payload.data.items.length === 0) {
+      return { ok: false, error: "No recipes to import" };
+    }
+
+    const { pantryRows, validIds } = await loadPantryForImport(userId);
+    const results: BatchCommitOutcome[] = [];
+
+    for (const item of payload.data.items) {
+      const draft = item.draft as ImportDraft;
+      const title = draft.title?.trim() ?? null;
+      const label = item.sourceLabel || `Item ${item.sourceIndex + 1}`;
+
+      const validationErr = validateDraftForCommit(draft);
+      if (validationErr) {
+        results.push({
+          sourceIndex: item.sourceIndex,
+          sourceLabel: label,
+          ok: false,
+          title,
+          error: validationErr,
+        });
+        continue;
+      }
+
+      const merged = draftToIngredientLines(draft, pantryRows, validIds, item.answers ?? {});
+      if (!merged.ok) {
+        results.push({
+          sourceIndex: item.sourceIndex,
+          sourceLabel: label,
+          ok: false,
+          title,
+          error: merged.error,
+        });
+        continue;
+      }
+      const ingZ = z.array(ingredientLineSchema).safeParse(merged.lines);
+      if (!ingZ.success) {
+        results.push({
+          sourceIndex: item.sourceIndex,
+          sourceLabel: label,
+          ok: false,
+          title,
+          error: ingZ.error.issues[0]?.message ?? "Invalid ingredients",
+        });
+        continue;
+      }
+      const base = recipeBaseSchema.safeParse({
+        title: draft.title,
+        description: draft.description ?? "",
+        instructions: draft.instructions ?? "",
+        servings: draft.servings ?? 1,
+        prepTimeMinutes: draft.prepTimeMinutes,
+        caloriesPerServing: draft.caloriesPerServing,
+        proteinGPerServing: draft.proteinGPerServing ?? "",
+      });
+      if (!base.success) {
+        results.push({
+          sourceIndex: item.sourceIndex,
+          sourceLabel: label,
+          ok: false,
+          title,
+          error: base.error.issues[0]?.message ?? "Invalid recipe fields",
+        });
+        continue;
+      }
+      try {
+        const created = await createRecipeFromImport(
+          base.data,
+          ingZ.data,
+          normalizeMealType(draft.mealType),
+        );
+        if (created.ok) {
+          results.push({
+            sourceIndex: item.sourceIndex,
+            sourceLabel: label,
+            ok: true,
+            id: created.id,
+            title: title ?? "",
+          });
+        } else {
+          results.push({
+            sourceIndex: item.sourceIndex,
+            sourceLabel: label,
+            ok: false,
+            title,
+            error: created.error,
+          });
+        }
+      } catch (e) {
+        results.push({
+          sourceIndex: item.sourceIndex,
+          sourceLabel: label,
+          ok: false,
+          title,
+          error: e instanceof Error ? e.message : "Failed to save recipe",
+        });
+      }
+    }
+
+    return { ok: true, results };
+  } catch {
+    return { ok: false, error: "Unauthorized" };
   }
 }
