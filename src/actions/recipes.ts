@@ -1,9 +1,9 @@
 "use server";
 
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
-import { pantryItems, recipeIngredients, recipes } from "@/db/schema";
+import { mealPlanEntries, pantryItems, recipeCookLog, recipeIngredients, recipes } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
 import { parseMealTypeFromForm, type RecipeMealTypeValue } from "@/lib/recipe-meal-types";
 import {
@@ -254,4 +254,111 @@ export async function deleteRecipe(recipeId: number): Promise<void> {
     .where(and(eq(recipes.id, recipeId), eq(recipes.userId, userId)));
   revalidatePath("/plan");
   revalidatePath("/home");
+}
+
+/* ─── Recipe Detail ─────────────────────────────────────────────── */
+
+export async function getRecipeById(recipeId: number) {
+  const userId = await requireUserId();
+  const db = getDb();
+  const [recipe] = await db
+    .select()
+    .from(recipes)
+    .where(and(eq(recipes.id, recipeId), eq(recipes.userId, userId)))
+    .limit(1);
+  if (!recipe) return null;
+  const ings = await db
+    .select()
+    .from(recipeIngredients)
+    .where(eq(recipeIngredients.recipeId, recipeId));
+  return { ...recipe, ingredients: ings };
+}
+
+export type RecipeCookEntry = {
+  id: number;
+  cookedAt: Date;
+  servingsCooked: string;
+  notes: string | null;
+  source: "log" | "meal_plan";
+};
+
+export async function getRecipeCookHistory(recipeId: number): Promise<RecipeCookEntry[]> {
+  const userId = await requireUserId();
+  const db = getDb();
+
+  // Direct cook logs
+  const logs = await db
+    .select()
+    .from(recipeCookLog)
+    .where(and(eq(recipeCookLog.recipeId, recipeId), eq(recipeCookLog.userId, userId)))
+    .orderBy(desc(recipeCookLog.cookedAt));
+
+  // Cooked meal plan entries for this recipe
+  const mealEntries = await db
+    .select()
+    .from(mealPlanEntries)
+    .where(
+      and(
+        eq(mealPlanEntries.recipeId, recipeId),
+        eq(mealPlanEntries.userId, userId),
+        eq(mealPlanEntries.status, "cooked"),
+      ),
+    )
+    .orderBy(desc(mealPlanEntries.updatedAt));
+
+  // Merge, deduplicate by mealPlanEntryId where applicable
+  const mealPlanIds = new Set(logs.filter((l) => l.mealPlanEntryId).map((l) => l.mealPlanEntryId));
+
+  const entries: RecipeCookEntry[] = logs.map((l) => ({
+    id: l.id,
+    cookedAt: l.cookedAt,
+    servingsCooked: l.servingsCooked,
+    notes: l.notes,
+    source: "log" as const,
+  }));
+
+  // Add meal plan entries not already linked to a cook log
+  for (const e of mealEntries) {
+    if (mealPlanIds.has(e.id)) continue;
+    entries.push({
+      id: e.id,
+      cookedAt: e.updatedAt,
+      servingsCooked: e.servings,
+      notes: e.notes,
+      source: "meal_plan" as const,
+    });
+  }
+
+  // Sort newest first
+  entries.sort((a, b) => b.cookedAt.getTime() - a.cookedAt.getTime());
+  return entries;
+}
+
+export async function logRecipeCook(
+  recipeId: number,
+  servings?: number,
+  notes?: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+  const db = getDb();
+
+  // Verify ownership
+  const [recipe] = await db
+    .select({ id: recipes.id })
+    .from(recipes)
+    .where(and(eq(recipes.id, recipeId), eq(recipes.userId, userId)))
+    .limit(1);
+  if (!recipe) return { ok: false, error: "Recipe not found" };
+
+  await db.insert(recipeCookLog).values({
+    recipeId,
+    userId,
+    cookedAt: new Date(),
+    servingsCooked: String(servings ?? 1),
+    notes: notes?.trim() || null,
+  });
+
+  revalidatePath(`/recipes/${recipeId}`);
+  revalidatePath("/home");
+  return { ok: true };
 }

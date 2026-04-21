@@ -166,6 +166,12 @@ export const recipes = pgTable(
     prepTimeMinutes: integer("prep_time_minutes"),
     caloriesPerServing: integer("calories_per_serving"),
     proteinGPerServing: numeric("protein_g_per_serving", { precision: 10, scale: 2 }),
+    carbsGPerServing: numeric("carbs_g_per_serving", { precision: 10, scale: 2 }),
+    fatGPerServing: numeric("fat_g_per_serving", { precision: 10, scale: 2 }),
+    fiberGPerServing: numeric("fiber_g_per_serving", { precision: 10, scale: 2 }),
+    sodiumMgPerServing: numeric("sodium_mg_per_serving", { precision: 10, scale: 2 }),
+    /** Estimated total weight of one batch in grams (all servings combined). */
+    totalWeightG: numeric("total_weight_g", { precision: 10, scale: 1 }),
     /** Plan recipe library tab: breakfast, lunch, dinner, or snack. */
     mealType: varchar("meal_type", { length: 20 }).notNull().default("breakfast"),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
@@ -233,6 +239,37 @@ export const shoppingListItems = pgTable(
   (t) => [index("idx_shopping_list_items_user_status").on(t.userId, t.status)],
 );
 
+export const recipeCookLog = pgTable(
+  "recipe_cook_log",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    recipeId: bigint("recipe_id", { mode: "number" })
+      .notNull()
+      .references(() => recipes.id, { onDelete: "cascade" }),
+    userId: bigint("user_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    cookedAt: timestamp("cooked_at", { mode: "date" }).notNull().defaultNow(),
+    servingsCooked: numeric("servings_cooked", { precision: 10, scale: 2 }).notNull().default("1"),
+    notes: text("notes"),
+    /** Optional link back to the meal plan entry that triggered this log. */
+    mealPlanEntryId: bigint("meal_plan_entry_id", { mode: "number" }).references(
+      () => mealPlanEntries.id,
+      { onDelete: "set null" },
+    ),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_recipe_cook_log_recipe").on(t.recipeId),
+    index("idx_recipe_cook_log_user").on(t.userId),
+  ],
+);
+
+export const recipeCookLogRelations = relations(recipeCookLog, ({ one }) => ({
+  recipe: one(recipes, { fields: [recipeCookLog.recipeId], references: [recipes.id] }),
+  user: one(users, { fields: [recipeCookLog.userId], references: [users.id] }),
+}));
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   settings: one(userSettings, {
     fields: [users.id],
@@ -258,6 +295,7 @@ export const pantryItemsRelations = relations(pantryItems, ({ one, many }) => ({
 export const recipesRelations = relations(recipes, ({ one, many }) => ({
   user: one(users, { fields: [recipes.userId], references: [users.id] }),
   ingredients: many(recipeIngredients),
+  cookLogs: many(recipeCookLog),
 }));
 
 export const recipeIngredientsRelations = relations(recipeIngredients, ({ one }) => ({

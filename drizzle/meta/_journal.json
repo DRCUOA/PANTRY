@@ -43,6 +43,13 @@
       "when": 1776000000000,
       "tag": "0005_profile_extras",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776600000000,
+      "tag": "0006_recipe_nutrition_and_cook_log",
+      "breakpoints": true
     }
   ]
 }
