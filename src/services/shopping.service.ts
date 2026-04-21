@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { mealPlanEntries, pantryItems, recipeIngredients, recipes, shoppingListItems } from "@/db/schema";
 import { normalizePantryName, scaledIngredientAmount } from "@/lib/pantry-match";
@@ -31,8 +31,15 @@ function normalizeUnit(unit: string | null | undefined) {
   return (unit ?? "").trim().toLowerCase();
 }
 
-function mergeKey(name: string, unit: string | null, sourceRecipeId: number) {
-  return `${normalizePantryName(name)}::${normalizeUnit(unit)}::${sourceRecipeId}`;
+/**
+ * Merge key for collapsing missing ingredients onto the shopping list. Keyed
+ * purely by normalized name + unit so the same ingredient coming from multiple
+ * recipes (or already on the list manually) resolves to one row — the source
+ * recipe is tracked separately on the merged record, but is NOT part of the
+ * identity.
+ */
+function mergeKey(name: string, unit: string | null) {
+  return `${normalizePantryName(name)}::${normalizeUnit(unit)}`;
 }
 
 function formatQuantity(value: number): string | null {
@@ -66,6 +73,10 @@ export async function listShoppingItemsReadModel(userId: number): Promise<Shoppi
 export async function generateFromMealPlanRange(userId: number, startDate: string, endDate: string) {
   const db = getDb();
 
+  // Skip cooked meals — their ingredients have already been deducted from the
+  // pantry and the user doesn't need to buy them again. Without this, a meal
+  // the user cooked earlier in the week could re-surface on the shopping list
+  // via a second recipe that shares ingredients with it.
   const planned = await db
     .select({ recipeId: mealPlanEntries.recipeId, servings: mealPlanEntries.servings })
     .from(mealPlanEntries)
@@ -74,6 +85,7 @@ export async function generateFromMealPlanRange(userId: number, startDate: strin
         eq(mealPlanEntries.userId, userId),
         gte(mealPlanEntries.plannedDate, startDate),
         lte(mealPlanEntries.plannedDate, endDate),
+        ne(mealPlanEntries.status, "cooked"),
       ),
     );
 
@@ -135,7 +147,7 @@ export async function generateFromMealPlanRange(userId: number, startDate: strin
         entry.servings,
       );
 
-      const key = mergeKey(missingIngredient.name, ingredient?.unit ?? null, recipe.id);
+      const key = mergeKey(missingIngredient.name, ingredient?.unit ?? null);
       const existingMerged = mergedMissing.get(key);
       if (existingMerged) {
         existingMerged.quantity += scaledQuantity;
@@ -155,10 +167,14 @@ export async function generateFromMealPlanRange(userId: number, startDate: strin
     }
   }
 
+  // Dedupe against every existing needed row — including manual adds where
+  // `sourceRecipeId` is null. Previously the existing-rows check required a
+  // matching sourceRecipeId, which meant a manually added "butter" (or one
+  // coming from a different recipe in an earlier run) didn't block a duplicate
+  // insert, and simultaneously couldn't be recognized as already-covered.
   const existingByKey = new Map<string, (typeof existingRows)>();
   for (const row of existingRows) {
-    if (row.sourceRecipeId == null) continue;
-    const key = mergeKey(row.name, row.unit, row.sourceRecipeId);
+    const key = mergeKey(row.name, row.unit);
     const bucket = existingByKey.get(key) ?? [];
     bucket.push(row);
     existingByKey.set(key, bucket);
