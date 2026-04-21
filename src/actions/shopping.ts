@@ -9,6 +9,7 @@ import { parseShoppingFormData, type AddShoppingItemDto } from "@/actions/payloa
 import {
   clearShoppingListService,
   listShoppingItemsReadModel,
+  neededShoppingNamesSet,
 } from "@/services/shopping.service";
 
 async function requireUserId(): Promise<number> {
@@ -67,6 +68,16 @@ async function createShoppingItem(userId: number, payload: AddShoppingItemDto): 
 export async function listShoppingItems() {
   const userId = await requireUserId();
   return listShoppingItemsReadModel(userId);
+}
+
+/**
+ * Normalized names of items with status "needed" on the shopping list.
+ * Used by the pantry and plan views to show "on shopping list" instead of
+ * "out of stock" / "missing".
+ */
+export async function getNeededShoppingNames(): Promise<Set<string>> {
+  const userId = await requireUserId();
+  return neededShoppingNamesSet(userId);
 }
 
 /**

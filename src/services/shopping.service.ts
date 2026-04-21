@@ -248,3 +248,17 @@ export async function clearShoppingListService(userId: number): Promise<{ delete
   await db.delete(shoppingListItems).where(eq(shoppingListItems.userId, userId));
   return { deleted: existing.length };
 }
+
+/**
+ * Return the set of normalized item names that are currently on the shopping
+ * list with status "needed". Used to upgrade "out" → "on_list" in pantry and
+ * plan views so the user can see which missing items are already covered.
+ */
+export async function neededShoppingNamesSet(userId: number): Promise<Set<string>> {
+  const db = getDb();
+  const rows = await db
+    .select({ name: shoppingListItems.name })
+    .from(shoppingListItems)
+    .where(and(eq(shoppingListItems.userId, userId), eq(shoppingListItems.status, "needed")));
+  return new Set(rows.map((r) => normalizePantryName(r.name)));
+}

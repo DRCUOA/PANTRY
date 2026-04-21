@@ -28,6 +28,8 @@
   --stock-low-bg: rgba(120, 53, 15, 0.68);
   --stock-handled-fg: #bbf7d0;
   --stock-handled-bg: rgba(20, 83, 45, 0.68);
+  --stock-on-list-fg: #93c5fd;
+  --stock-on-list-bg: rgba(30, 58, 138, 0.68);
   --receipt-stripe: #1a1a22;
   --touch-min: 48px;
   /* Plan: “today” from the user’s device (local date) */
@@ -64,6 +66,8 @@
   --stock-low-bg: rgba(120, 53, 15, 0.68);
   --stock-handled-fg: #bbf7d0;
   --stock-handled-bg: rgba(20, 83, 45, 0.68);
+  --stock-on-list-fg: #93c5fd;
+  --stock-on-list-bg: rgba(30, 58, 138, 0.68);
   --receipt-stripe: #1a1a22;
   --today-bg: rgba(34, 197, 94, 0.11);
   --today-border: rgba(74, 222, 128, 0.42);
@@ -98,6 +102,8 @@
     --stock-low-bg: rgba(254, 243, 199, 0.94);
     --stock-handled-fg: #14532d;
     --stock-handled-bg: rgba(220, 252, 231, 0.94);
+    --stock-on-list-fg: #1e3a8a;
+    --stock-on-list-bg: rgba(191, 219, 254, 0.92);
     --receipt-stripe: #ebebf0;
     --today-bg: rgba(34, 197, 94, 0.14);
     --today-border: rgba(22, 163, 74, 0.45);
@@ -132,6 +138,8 @@
   --stock-low-bg: rgba(254, 243, 199, 0.94);
   --stock-handled-fg: #14532d;
   --stock-handled-bg: rgba(220, 252, 231, 0.94);
+  --stock-on-list-fg: #1e3a8a;
+  --stock-on-list-bg: rgba(191, 219, 254, 0.92);
   --receipt-stripe: #ebebf0;
   --today-bg: rgba(34, 197, 94, 0.14);
   --today-border: rgba(22, 163, 74, 0.45);
@@ -1245,6 +1253,11 @@ textarea,
 .stock-state-badge--handled {
   color: var(--stock-handled-fg);
   background: color-mix(in srgb, var(--stock-handled-bg) 88%, transparent);
+}
+
+.stock-state-badge--on_list {
+  color: var(--stock-on-list-fg);
+  background: color-mix(in srgb, var(--stock-on-list-bg) 88%, transparent);
 }
 
 /* Add-meal panel: ticket stub */

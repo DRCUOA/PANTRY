@@ -23,4 +23,11 @@ describe("StockStateBadge", () => {
     expect(html).toContain("Handled");
     expect(html).toContain("✓");
   });
+
+  it("renders on-shopping-list badge with icon and semantic text", () => {
+    const html = renderToStaticMarkup(<StockStateBadge state="on_list" />);
+    expect(html).toContain("stock-state-badge--on_list");
+    expect(html).toContain("On shopping list");
+    expect(html).toContain("🛒");
+  });
 });

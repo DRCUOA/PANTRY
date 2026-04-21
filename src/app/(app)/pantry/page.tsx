@@ -4,12 +4,14 @@ import {
   listPantryUnitSuggestions,
   type PantryFilter,
 } from "@/actions/pantry";
+import { getNeededShoppingNames } from "@/actions/shopping";
 import type { PantryItemDTO } from "@/components/PantryEditSheet";
 import { Aisle } from "@/components/ui/Aisle";
 import { ChipRow, Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconPantry, IconSearch } from "@/components/ui/icons";
 import { PantryRow } from "@/components/ui/PantryRow";
+import { normalizePantryName } from "@/lib/pantry-match";
 import { pantrySectionFor } from "@/lib/pantry-section";
 
 const FILTERS: { key: PantryFilter; label: string }[] = [
@@ -45,10 +47,11 @@ export default async function PantryPage({
   const sp = await searchParams;
   const q = sp.q ?? "";
   const filter = FILTERS.some((f) => f.key === sp.filter) ? (sp.filter as PantryFilter) : "all";
-  const [rows, locationSuggestions, unitSuggestions] = await Promise.all([
+  const [rows, locationSuggestions, unitSuggestions, neededNames] = await Promise.all([
     listPantryItems(q, filter),
     listPantryLocationSuggestions(),
     listPantryUnitSuggestions(),
+    getNeededShoppingNames(),
   ]);
   const items = rows.map(toDto);
 
@@ -133,6 +136,7 @@ export default async function PantryPage({
                         item={item}
                         locationSuggestions={locationSuggestions}
                         unitSuggestions={unitSuggestions}
+                        onShoppingList={neededNames.has(normalizePantryName(item.name))}
                       />
                     </li>
                   ))}

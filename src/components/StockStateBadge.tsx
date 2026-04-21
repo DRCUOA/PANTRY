@@ -2,6 +2,7 @@ import type { StockState } from "@/services/_shared/stock-state";
 
 const STOCK_STATE_META: Record<StockState, { icon: string; label: string }> = {
   out: { icon: "⛔", label: "Out of stock" },
+  on_list: { icon: "🛒", label: "On shopping list" },
   low: { icon: "⚠", label: "Low stock" },
   handled: { icon: "✓", label: "Handled" },
 };

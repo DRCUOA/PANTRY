@@ -54,10 +54,12 @@ export function PantryRow({
   item,
   locationSuggestions = [],
   unitSuggestions = [],
+  onShoppingList = false,
 }: {
   item: PantryItemDTO;
   locationSuggestions?: string[];
   unitSuggestions?: string[];
+  onShoppingList?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -97,6 +99,7 @@ export function PantryRow({
   const qty = toNumber(item.quantity);
   const lowThreshold = item.lowStockThreshold != null ? Number(item.lowStockThreshold) : null;
   const isOut = qty <= 0;
+  const isOnList = isOut && onShoppingList;
   const isLow = !isOut && lowThreshold != null && qty <= lowThreshold;
   const expiry = formatExpiry(item.expirationDate);
 
@@ -137,6 +140,7 @@ export function PantryRow({
   }
 
   const metaBits: string[] = [];
+  if (isOnList) metaBits.push("On shopping list");
   if (item.location) metaBits.push(item.location);
   if (expiry) metaBits.push(expiry.label);
 
@@ -157,13 +161,15 @@ export function PantryRow({
         }}
       >
         <div
-          className={`ui-item-row${isOut ? " opacity-70" : ""}`}
+          className={`ui-item-row${isOut && !isOnList ? " opacity-70" : ""}`}
           style={
-            isLow
-              ? { borderColor: "var(--stock-low-fg)", boxShadow: "inset 3px 0 0 var(--stock-low-fg)" }
-              : isOut
-                ? { borderColor: "var(--stock-out-fg)", boxShadow: "inset 3px 0 0 var(--stock-out-fg)" }
-                : undefined
+            isOnList
+              ? { borderColor: "var(--stock-on-list-fg)", boxShadow: "inset 3px 0 0 var(--stock-on-list-fg)" }
+              : isLow
+                ? { borderColor: "var(--stock-low-fg)", boxShadow: "inset 3px 0 0 var(--stock-low-fg)" }
+                : isOut
+                  ? { borderColor: "var(--stock-out-fg)", boxShadow: "inset 3px 0 0 var(--stock-out-fg)" }
+                  : undefined
           }
         >
           <button

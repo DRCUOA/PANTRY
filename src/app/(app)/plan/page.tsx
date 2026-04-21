@@ -4,6 +4,7 @@ import { addMealPlanEntry, listMealPlanRange } from "@/actions/meal-plan";
 import { listPantryItemsForPickers } from "@/actions/pantry";
 import { listRecipes } from "@/actions/recipes";
 import { getUserSettings } from "@/actions/settings";
+import { getNeededShoppingNames } from "@/actions/shopping";
 import { PlanMealTile } from "@/components/PlanMealTile";
 import { PlanWeekActions } from "@/components/PlanWeekActions";
 import { SundayResetButton } from "@/components/SundayResetButton";
@@ -14,6 +15,7 @@ import { WeekStrip, type DayPill } from "@/components/ui/WeekStrip";
 import { getDb } from "@/db";
 import { pantryItems } from "@/db/schema";
 import { getSession } from "@/lib/get-session";
+import { normalizePantryName } from "@/lib/pantry-match";
 import { toPlanRecipeDetail } from "@/lib/plan-recipe";
 import { recipePantryStatus } from "@/lib/recipe-score";
 import { isoDateInZone, resolveTimezone } from "@/lib/timezone";
@@ -62,15 +64,18 @@ export default async function PlanPage({
   const session = await getSession();
   const userId = session.userId!;
   const db = getDb();
-  const pantryRows = await db
-    .select({
-      name: pantryItems.name,
-      expirationDate: pantryItems.expirationDate,
-      quantity: pantryItems.quantity,
-      lowStockThreshold: pantryItems.lowStockThreshold,
-    })
-    .from(pantryItems)
-    .where(eq(pantryItems.userId, userId));
+  const [pantryRows, neededNames] = await Promise.all([
+    db
+      .select({
+        name: pantryItems.name,
+        expirationDate: pantryItems.expirationDate,
+        quantity: pantryItems.quantity,
+        lowStockThreshold: pantryItems.lowStockThreshold,
+      })
+      .from(pantryItems)
+      .where(eq(pantryItems.userId, userId)),
+    getNeededShoppingNames(),
+  ]);
 
   // Build week strip
   const days: DayPill[] = Array.from({ length: 7 }, (_, i) => {
@@ -266,14 +271,22 @@ export default async function PlanPage({
                         },
                         pantryRows,
                       );
-                      const requiredMissing = missing.filter((i) => !i.optional).length;
+                      const requiredMissing = missing.filter((i) => !i.optional);
+                      const onList = requiredMissing.filter((i) =>
+                        neededNames.has(normalizePantryName(i.name)),
+                      ).length;
+                      const stillMissing = requiredMissing.length - onList;
                       const totalIngredients = recipe.ingredients.length;
                       pantryRatio = totalIngredients > 0 ? `${matchedCount}/${totalIngredients}` : null;
-                      missingRequired = requiredMissing;
-                      missingSummary =
-                        totalIngredients > 0
-                          ? `${matchedCount}/${totalIngredients} in pantry · ${requiredMissing} missing`
-                          : null;
+                      missingRequired = stillMissing;
+                      {
+                        const parts: string[] = [];
+                        if (totalIngredients > 0)
+                          parts.push(`${matchedCount}/${totalIngredients} in pantry`);
+                        if (stillMissing > 0) parts.push(`${stillMissing} missing`);
+                        if (onList > 0) parts.push(`${onList} on list`);
+                        missingSummary = parts.length > 0 ? parts.join(" · ") : null;
+                      }
                     }
                     return (
                       <li key={entry.id}>

@@ -1,4 +1,4 @@
-export type StockState = "handled" | "low" | "out";
+export type StockState = "handled" | "low" | "out" | "on_list";
 
 const EPSILON = 0.000001;
 
