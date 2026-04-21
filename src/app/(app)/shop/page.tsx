@@ -7,20 +7,13 @@ import { ChipRow, Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconShop } from "@/components/ui/icons";
 import { ShoppingRow } from "@/components/ui/ShoppingRow";
+import { classifyItem, type SupermarketSection } from "@/lib/supermarket-sections";
 
 type Filter = "active" | "bought" | "all";
 
 function parseFilter(raw?: string): Filter {
   if (raw === "bought" || raw === "all") return raw;
   return "active";
-}
-
-function sectionFor(item: {
-  name: string;
-  sourceRecipeTitle: string | null;
-}): string {
-  if (item.sourceRecipeTitle) return `From ${item.sourceRecipeTitle}`;
-  return "Manual";
 }
 
 export default async function ShopPage({
@@ -45,18 +38,19 @@ export default async function ShopPage({
         ? all
         : all.filter((i) => i.status === "needed");
 
-  const grouped = new Map<string, typeof all>();
+  const grouped = new Map<string, { section: SupermarketSection; items: typeof all }>();
   for (const item of visible) {
-    const key = sectionFor(item);
-    const bucket = grouped.get(key) ?? [];
-    bucket.push(item);
-    grouped.set(key, bucket);
+    const section = classifyItem(item.name);
+    const existing = grouped.get(section.id);
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      grouped.set(section.id, { section, items: [item] });
+    }
   }
-  const sortedSections = Array.from(grouped.keys()).sort((a, b) => {
-    if (a === "Manual") return -1;
-    if (b === "Manual") return 1;
-    return a.localeCompare(b);
-  });
+  const sortedSections = Array.from(grouped.values()).sort(
+    (a, b) => a.section.sortOrder - b.section.sortOrder,
+  );
 
   return (
     <div className="space-y-4 pb-4">
@@ -99,29 +93,26 @@ export default async function ShopPage({
         />
       ) : (
         <div className="ui-list-stack">
-          {sortedSections.map((section) => {
-            const items = grouped.get(section) ?? [];
-            return (
-              <Aisle key={section} title={section} count={items.length}>
-                <ul className="space-y-2">
-                  {items.map((item) => (
-                    <li key={item.id}>
-                      <ShoppingRow
-                        item={{
-                          id: item.id,
-                          name: item.name,
-                          quantity: item.quantity,
-                          unit: item.unit,
-                          status: item.status,
-                          sourceRecipeTitle: item.sourceRecipeTitle,
-                        }}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </Aisle>
-            );
-          })}
+          {sortedSections.map(({ section, items }) => (
+            <Aisle key={section.id} title={section.name} count={items.length}>
+              <ul className="space-y-2">
+                {items.map((item) => (
+                  <li key={item.id}>
+                    <ShoppingRow
+                      item={{
+                        id: item.id,
+                        name: item.name,
+                        quantity: item.quantity,
+                        unit: item.unit,
+                        status: item.status,
+                        sourceRecipeTitle: item.sourceRecipeTitle,
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </Aisle>
+          ))}
         </div>
       )}
     </div>
