@@ -1364,3 +1364,202 @@ textarea,
   );
   opacity: 0.7;
 }
+
+/* ============================================================
+ * Print: shopping-list hand-held printout
+ * Hidden on screen, only the .print-stage is visible during
+ * @media print. A4 portrait with thin dashed off-dark-grey
+ * borders, repeating column headers and a "Page X of Y" footer
+ * (margin-box; supported in Chromium-based browsers).
+ * ============================================================ */
+.print-stage {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm 18mm 12mm;
+  }
+
+  /* Page X of Y. Supported in Chromium; ignored elsewhere. */
+  @page {
+    @bottom-center {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: var(--font-dm-sans), system-ui, sans-serif;
+      font-size: 9pt;
+      color: #555;
+    }
+  }
+
+  /* Hide every other top-level child of <body>; the print-stage portal
+   * lives directly under <body>, so siblings are the React app root and
+   * any other portals (modals, snackbars). */
+  body[data-print-active="true"] > *:not(.print-stage) {
+    display: none !important;
+  }
+
+  body[data-print-active="true"] .print-stage {
+    display: block !important;
+    position: static;
+    color: #000;
+    background: #fff;
+    font-family: var(--font-dm-sans), system-ui, sans-serif;
+    font-size: calc(11pt * var(--print-scale, 1));
+    line-height: 1.3;
+  }
+
+  body[data-print-active="true"] .print-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 0 0 4mm 0;
+    border-bottom: 1px dashed #555;
+    padding-bottom: 2mm;
+  }
+
+  body[data-print-active="true"] .print-title {
+    font-family: var(--font-newsreader), ui-serif, serif;
+    font-size: calc(16pt * var(--print-scale, 1));
+    font-weight: 700;
+    margin: 0;
+    color: #000;
+  }
+
+  body[data-print-active="true"] .print-meta {
+    font-size: calc(9pt * var(--print-scale, 1));
+    color: #333;
+  }
+
+  body[data-print-active="true"] .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: auto;
+    table-layout: fixed;
+  }
+
+  /* thead.display = table-header-group is the default, but spell it out so
+   * the column row reliably repeats on every paginated page. */
+  body[data-print-active="true"] .print-table thead {
+    display: table-header-group;
+  }
+
+  body[data-print-active="true"] .print-table tfoot {
+    display: table-footer-group;
+  }
+
+  body[data-print-active="true"] .print-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  body[data-print-active="true"] .print-table th,
+  body[data-print-active="true"] .print-table td {
+    border: 1px dashed #555;
+    padding: 1.6mm 2.2mm;
+    text-align: left;
+    vertical-align: top;
+    color: #000;
+    word-break: break-word;
+  }
+
+  body[data-print-active="true"] .print-table th {
+    background: #ececec;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: calc(9pt * var(--print-scale, 1));
+  }
+
+  body[data-print-active="true"] .print-section-row td {
+    background: #d9d9d9;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: calc(9pt * var(--print-scale, 1));
+    padding: 1.4mm 2.2mm;
+  }
+
+  body[data-print-active="true"] .print-cell--qty,
+  body[data-print-active="true"] .print-cell--aisle {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  body[data-print-active="true"] .print-cell--empty {
+    text-align: center;
+    color: #555;
+    font-style: italic;
+  }
+
+  body[data-print-active="true"] .print-blank-row td {
+    height: calc(7mm * var(--print-scale, 1));
+  }
+
+  /* Column widths are tuned per variant so the larger checklist still fits
+   * within the printable A4 width without forcing tiny aisle text. */
+  body[data-print-active="true"] .print-table--simple col,
+  body[data-print-active="true"] .print-table--simple .print-col-name {
+    width: auto;
+  }
+  body[data-print-active="true"] .print-table--simple .print-col-qty {
+    width: 30mm;
+  }
+
+  body[data-print-active="true"] .print-table--enhanced .print-col-qty {
+    width: 26mm;
+  }
+  body[data-print-active="true"] .print-table--enhanced .print-col-aisle {
+    width: 50mm;
+  }
+
+  body[data-print-active="true"] .print-table--checklist .print-col-check {
+    width: 12mm;
+    text-align: center;
+  }
+  body[data-print-active="true"] .print-table--checklist .print-col-qty {
+    width: 22mm;
+  }
+  body[data-print-active="true"] .print-table--checklist .print-col-aisle {
+    width: 38mm;
+  }
+  body[data-print-active="true"] .print-table--checklist td.print-cell--check {
+    text-align: center;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(0, 0, 0, 0) 4px,
+      rgba(0, 0, 0, 0) 5px
+    );
+  }
+
+  /* Stripe a faint guide line on blank rows so they're easy to write on. */
+  body[data-print-active="true"] .print-blank-row td:not(.print-cell--check):not(.print-cell--aisle) {
+    border-bottom: 1px dashed #555;
+  }
+}
+
+/* The off-page measurement clone needs to render visibly so we can read its
+ * scrollHeight, but only outside @media print (it's positioned off-screen). */
+.print-stage--measure {
+  display: block !important;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11pt;
+  line-height: 1.3;
+  color: #000;
+  background: #fff;
+}
+.print-stage--measure .print-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.print-stage--measure .print-table th,
+.print-stage--measure .print-table td {
+  border: 1px dashed #555;
+  padding: 1.6mm 2.2mm;
+}
+.print-stage--measure .print-blank-row td {
+  height: 7mm;
+}

@@ -1,6 +1,7 @@
 import { listPantryUnitSuggestions } from "@/actions/pantry";
 import { listRecentShoppingNames, listShoppingItems } from "@/actions/shopping";
 import { ClearShoppingButton } from "@/components/ClearShoppingButton";
+import { PrintShoppingButton } from "@/components/PrintShoppingButton";
 import { ShoppingQuickAddForm } from "@/components/ShoppingQuickAddForm";
 import { Aisle } from "@/components/ui/Aisle";
 import { ChipRow, Chip } from "@/components/ui/Chip";
@@ -61,7 +62,19 @@ export default async function ShopPage({
             {activeCount} to get · {boughtCount} done
           </p>
         </div>
-        <ClearShoppingButton totalCount={all.length} />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <PrintShoppingButton
+            items={all.map((i) => ({
+              id: i.id,
+              name: i.name,
+              quantity: i.quantity,
+              unit: i.unit,
+              status: i.status,
+            }))}
+            totalCount={all.length}
+          />
+          <ClearShoppingButton totalCount={all.length} />
+        </div>
       </header>
 
       <ShoppingQuickAddForm
