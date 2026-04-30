@@ -73,9 +73,7 @@ export function SheetModal({
         </div>
         <div className="ui-sheet__body">{children}</div>
         {footer && (
-          <div className="border-t border-[var(--border)] bg-[var(--surface-inset)] px-4 pb-3 pt-3">
-            {footer}
-          </div>
+          <div className="ui-sheet__footer">{footer}</div>
         )}
       </div>
     </>,

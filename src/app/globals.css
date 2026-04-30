@@ -638,22 +638,39 @@
   background: rgba(0, 0, 0, 0.55);
   z-index: 50;
 }
+/* Bottom sheet — anchored to the bottom of the viewport but kept off the
+ * edges with a gutter so it never slides under a dock / sidebar / phone
+ * notch. Children use `min-width: 0` so long words/forms wrap to the
+ * sheet width instead of forcing horizontal overflow. */
 .ui-sheet {
+  --ui-sheet-gutter: 0.75rem;
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  /* Side gutters via left/right; `margin-inline: auto` recenters within
+   * the available space when max-width clamps the size on wider screens. */
+  left: max(var(--ui-sheet-gutter), env(safe-area-inset-left));
+  right: max(var(--ui-sheet-gutter), env(safe-area-inset-right));
+  bottom: max(var(--ui-sheet-gutter), env(safe-area-inset-bottom));
+  margin-inline: auto;
+  width: auto;
+  max-width: 42rem;
   z-index: 51;
   background: var(--surface);
-  border-top-left-radius: var(--radius-xl);
-  border-top-right-radius: var(--radius-xl);
+  border-radius: var(--radius-xl);
   box-shadow: var(--elev-3);
   display: flex;
   flex-direction: column;
   max-height: min(92vh, 760px);
-  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .ui-sheet {
+    --ui-sheet-gutter: 1.25rem;
+    max-width: 48rem;
+  }
 }
 .ui-sheet__grip {
+  flex-shrink: 0;
   height: 5px;
   width: 44px;
   border-radius: 999px;
@@ -661,21 +678,42 @@
   margin: 0.65rem auto 0.35rem;
 }
 .ui-sheet__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.35rem 1rem 0.75rem;
+  min-width: 0;
 }
 .ui-sheet__title {
   font-family: var(--font-newsreader), ui-serif, serif;
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
+  min-width: 0;
 }
 .ui-sheet__body {
   padding: 0 1rem 1rem;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
+  min-width: 0;
+  min-height: 0;
+  /* Long unbroken strings (URLs, ingredient lists, etc.) shouldn't be
+   * able to push the sheet wider than its container. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.ui-sheet__body > * {
+  max-width: 100%;
+}
+.ui-sheet__footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface-inset);
+  padding: 0.75rem 1rem;
+  min-width: 0;
 }
 
 /* Primary button (v2) */
