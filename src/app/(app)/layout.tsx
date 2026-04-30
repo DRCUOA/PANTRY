@@ -9,6 +9,7 @@ import { getUserSettings } from "@/actions/settings";
 import { getSession } from "@/lib/get-session";
 import { BrowserTimezoneSync } from "@/components/BrowserTimezoneSync";
 import { UserAvatar } from "@/components/UserAvatar";
+import { AppFooter } from "@/components/ui/AppFooter";
 import { TabBar } from "@/components/ui/TabBar";
 
 export default async function AppShellLayout({ children }: { children: React.ReactNode }) {
@@ -49,6 +50,7 @@ export default async function AppShellLayout({ children }: { children: React.Rea
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-4 md:max-w-3xl md:px-6">
         {children}
       </main>
+      <AppFooter />
       <TabBar
         locationSuggestions={locationSuggestions}
         unitSuggestions={unitSuggestions}
